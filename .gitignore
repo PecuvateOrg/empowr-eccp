@@ -1,0 +1,28 @@
+# Dependencies and build output
+src/node_modules/
+src/.next/
+src/out/
+
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+src/.env
+src/.env.local
+src/.env.*.local
+src/.env*.bak
+
+# Netlify
+.netlify/
+src/.netlify/
+
+# Generated files
+*.log
+.DS_Store
+src/next-env.d.ts
+src/tsconfig.tsbuildinfo
+
+# Internal workspace documents — held privately by the Empowr CIC hub.
+# This repository is public; do not track operational or commercial state here.
+DEVLOG.md
+memory.md
