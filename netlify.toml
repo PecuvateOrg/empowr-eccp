@@ -6,6 +6,12 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Resolved relative to `base`, i.e. src/netlify/functions — same convention as
+# Empowr Members and PecuvateDashboard.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
