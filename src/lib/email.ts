@@ -24,14 +24,14 @@ export async function sendOtpEmail(email: string, code: string): Promise<void> {
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family:sans-serif;color:#1B1B1B;max-width:480px;margin:0 auto;padding:32px 16px;">
-  <p style="font-size:15px;margin-bottom:24px;">Your Empowr Coach Certification login code:</p>
+  <p style="font-size:15px;margin-bottom:24px;">Your Empowr ECCP login code:</p>
   <p style="font-size:40px;font-weight:700;letter-spacing:12px;text-align:center;margin:0 0 24px;">${code}</p>
   <p style="font-size:14px;color:#6B7280;">This code expires in 10 minutes. If you didn't request it, ignore this email.</p>
   <hr style="border:none;border-top:1px solid #E5E7EB;margin:32px 0;">
   <p style="font-size:12px;color:#9CA3AF;">Empowr CIC · empowrcic.org</p>
 </body>
 </html>`,
-    text: `Your Empowr Coach Certification login code: ${code}
+    text: `Your Empowr ECCP login code: ${code}
 
 This code expires in 10 minutes. If you didn't request it, ignore this email.
 
