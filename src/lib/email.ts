@@ -1,9 +1,12 @@
 import { Resend } from "resend";
 
-// safeguarding@ is the address the handover names for this programme. It sits
-// on the empowrcic.org apex, which already carries verified SPF/DKIM/DMARC —
-// no new domain or subdomain verification is needed.
-const FROM = "Empowr Safeguarding <safeguarding@empowrcic.org>";
+// Every ECCP email goes out from this one address, and replies come back to it.
+// It sits on the empowrcic.org apex, which already carries verified SPF/DKIM/
+// DMARC, so no new domain or subdomain verification is needed.
+//
+// The handover named safeguarding@ instead; that address was used and proven to
+// deliver, then superseded by eccp@ on 2026-09-15 as the programme's own inbox.
+const FROM = "Empowr ECCP <eccp@empowrcic.org>";
 
 // Resend's SDK reports API failures in the returned `error` field rather than
 // throwing, so an unverified sender or rejected address returns normally. Left
