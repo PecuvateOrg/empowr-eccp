@@ -27,13 +27,17 @@ async function hashCode(code: string, email: string): Promise<string> {
     .join("");
 }
 
+// A failed query and a genuinely absent coach both yield null data. Collapsing
+// them hides misconfiguration as "no such account" — the caller must be able to
+// tell "this address isn't registered" from "the database refused us".
 export async function findCoachByEmail(email: string): Promise<Coach | null> {
-  const { data } = await getDb()
+  const { data, error } = await getDb()
     .from("coaches")
     .select("id, email, full_name, is_staff")
     .eq("email", email.trim().toLowerCase())
     .maybeSingle();
 
+  if (error) throw new Error(`coach lookup failed: ${error.message}`);
   return data ?? null;
 }
 
@@ -41,7 +45,7 @@ export async function createOtp(email: string): Promise<string> {
   const normEmail = email.trim().toLowerCase();
   const code = generateCode();
 
-  await getDb()
+  const { error } = await getDb()
     .from("otp_tokens")
     .insert({
       email: normEmail,
@@ -49,6 +53,7 @@ export async function createOtp(email: string): Promise<string> {
       expires_at: new Date(Date.now() + CODE_TTL_MINUTES * 60_000).toISOString(),
     });
 
+  if (error) throw new Error(`otp insert failed: ${error.message}`);
   return code;
 }
 

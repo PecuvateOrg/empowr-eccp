@@ -11,12 +11,21 @@ export async function POST(request: Request) {
   }
 
   // Coach accounts are staff-provisioned; there is no self-signup. The response
-  // is identical either way so this endpoint cannot be used to discover which
-  // addresses hold a safeguarding record.
-  const coach = await findCoachByEmail(email);
-  if (coach) {
-    await sendOtpEmail(coach.email, await createOtp(coach.email));
+  // is identical for a known and an unknown address so this endpoint cannot be
+  // used to discover which addresses hold a safeguarding record. A genuine
+  // failure is NOT disguised that way — it is logged and returned as a 500,
+  // otherwise a broken database reads to the user as "your code is coming".
+  try {
+    const coach = await findCoachByEmail(email);
+    if (coach) {
+      await sendOtpEmail(coach.email, await createOtp(coach.email));
+    }
+    return NextResponse.json({ success: true });
+  } catch (cause) {
+    console.error("[otp/send] failed", cause);
+    return NextResponse.json(
+      { error: "Could not send a code right now." },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json({ success: true });
 }
