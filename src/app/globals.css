@@ -36,3 +36,37 @@ body {
 a {
   color: inherit;
 }
+
+/* Authored course content injected as HTML. Only these tags appear in the
+   handover material: p, li, strong, ul, em, br, ol. */
+.course-body p {
+  margin: 0 0 1.1rem;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--color-ink);
+}
+
+.course-body p:last-child {
+  margin-bottom: 0;
+}
+
+.course-body ul,
+.course-body ol {
+  margin: 0 0 1.1rem;
+  padding-left: 1.3rem;
+}
+
+.course-body li {
+  margin-bottom: 0.55rem;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--color-ink);
+}
+
+.course-body li::marker {
+  color: var(--color-blue);
+}
+
+.course-body strong {
+  font-weight: 800;
+}
