@@ -4,10 +4,6 @@ import { ArrowRight, BadgeCheck } from "lucide-react";
 import { CertificationCard } from "@/components/CertificationCard";
 import { certificationLevels } from "@/lib/programme";
 
-// The mock-up alternates its role-card fills by nth-child: 1 and 4 solid blue,
-// 2 and 3 near-black.
-const DARK_CARD_INDEXES = new Set([1, 2]);
-
 export default function HomePage() {
   return (
     <main className="flex min-h-screen w-full flex-col items-center">
@@ -108,7 +104,15 @@ export default function HomePage() {
               <CertificationCard
                 certification={certification}
                 key={certification.level}
-                tone={DARK_CARD_INDEXES.has(index) ? "dark" : "blue"}
+                // The mock-up fills the first and last cards blue and the
+                // middle ones near-black. Derived rather than hard-coded to
+                // indexes, so a fifth role keeps the pattern instead of
+                // silently breaking the rhythm.
+                tone={
+                  index === 0 || index === certificationLevels.length - 1
+                    ? "blue"
+                    : "dark"
+                }
               />
             ))}
           </div>
