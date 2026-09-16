@@ -44,7 +44,7 @@ This file is the map. Workspace detail lives in each `CONTEXT.md`.
 ## Deployment
 
 - Platform: Netlify
-- Domain: <!-- assign before /netlify-deploy -->
+- Domain: eccp.empowrcic.org
 - Branch: main
 - Base directory: src/
 
