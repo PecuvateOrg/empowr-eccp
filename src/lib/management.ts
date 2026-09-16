@@ -92,3 +92,48 @@ export async function getManagementOverview(requestedBy: Coach): Promise<CoachOv
     };
   });
 }
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const POSTGRES_UNIQUE_VIOLATION = "23505";
+
+export type ProvisionCoachResult =
+  | { ok: true; coach: { id: string; email: string; fullName: string } }
+  | { ok: false; error: string };
+
+// Staff-provisioned accounts only — there is no public self-signup, per the
+// original plan's read of the handover material (the mock-up only shows a
+// login form, never a signup form). Re-checks is_staff itself, same reason
+// as getManagementOverview above.
+export async function provisionCoach(
+  requestedBy: Coach,
+  input: { email: string; fullName: string },
+): Promise<ProvisionCoachResult> {
+  if (!requestedBy.is_staff) {
+    throw new Error("not authorised: requestedBy is not staff");
+  }
+
+  const email = input.email.trim().toLowerCase();
+  const fullName = input.fullName.trim();
+
+  if (!EMAIL_PATTERN.test(email)) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+  if (!fullName) {
+    return { ok: false, error: "Enter the coach's full name." };
+  }
+
+  const { data, error } = await getDb()
+    .from("coaches")
+    .insert({ email, full_name: fullName, is_staff: false })
+    .select("id, email, full_name")
+    .single();
+
+  if (error) {
+    if (error.code === POSTGRES_UNIQUE_VIOLATION) {
+      return { ok: false, error: "A coach with that email is already provisioned." };
+    }
+    throw new Error(`coach provisioning failed: ${error.message}`);
+  }
+
+  return { ok: true, coach: { id: data.id, email: data.email, fullName: data.full_name } };
+}

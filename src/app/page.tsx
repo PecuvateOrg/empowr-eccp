@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight, BadgeCheck } from "lucide-react";
 import { CertificationCard } from "@/components/CertificationCard";
 import { certificationLevels } from "@/lib/programme";
@@ -21,10 +22,13 @@ export default function HomePage() {
           Build the knowledge, facilitation skills, and community leadership to
           deliver inclusive Empowr experiences.
         </p>
-        <p className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)]">
-          Programme platform in development
+        <Link
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)] hover:bg-blue-dark"
+          href="/login"
+        >
+          Coach sign in
           <ArrowRight aria-hidden="true" className="size-5" />
-        </p>
+        </Link>
       </section>
 
       <section aria-labelledby="pathway-heading" className="w-full pb-16">
