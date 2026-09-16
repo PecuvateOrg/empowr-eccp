@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentCoach } from "@/lib/auth";
 import { getManagementOverview } from "@/lib/management";
+import { ProvisionCoachForm } from "./ProvisionCoachForm";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -25,6 +26,8 @@ export default async function ManagementPage() {
       <p className="mt-2 text-sm text-muted">
         {roster.length} coach{roster.length === 1 ? "" : "es"} provisioned.
       </p>
+
+      <ProvisionCoachForm />
 
       <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-card">
         <table className="w-full min-w-[720px] text-left text-sm">

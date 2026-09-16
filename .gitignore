@@ -15,6 +15,7 @@ src/.env*.bak
 # Netlify
 .netlify/
 src/.netlify/
+src/deno.lock
 
 # Generated files
 *.log
