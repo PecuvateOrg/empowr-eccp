@@ -11,7 +11,11 @@ export default function HomePage() {
         <span>Empowr ECCP</span>
       </header>
 
-      {/* Copy is the designer's coach-pathway mock-up hero, verbatim. The
+      {/* Headline, paragraph and CTA labels are the designer's coach-pathway
+          mock-up hero, verbatim. The kicker is NOT: the mock-up expands ECCP as
+          "Empowr Coach & Champion Pathway", but "Empowr Certified Coaching
+          Programme" is the confirmed name (owner decision 2026-09-16) and is
+          what the welcome email and the project docs use. The
           mock-up sets this over a navy-to-blue gradient with white text, where
           its coral accent (#ff6570) clears contrast easily. On this light cream
           background that same coral measures 2.67:1 — under the 3:1 floor for
@@ -19,7 +23,7 @@ export default function HomePage() {
           itself goes dark. */}
       <section className="flex max-w-4xl flex-col items-center py-20 sm:py-28">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-blue">
-          Empowr Coach &amp; Champion Pathway
+          Empowr Certified Coaching Programme
         </p>
         <h1 className="mt-5 text-5xl font-black leading-[1.04] tracking-tight text-ink sm:text-7xl">
           Grow into the coach you want to{" "}
