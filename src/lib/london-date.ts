@@ -37,6 +37,15 @@ export interface CertificateDates {
   readonly renewsAtLabel: string;
 }
 
+// London calendar date, N days from now, as an ISO date (yyyy-mm-dd) — for
+// comparing against the `date` columns on eccp.certificates, which are
+// themselves stored as London calendar dates (see computeCertificateDates).
+export function londonDateIsoInDays(days: number, now: Date = new Date()): string {
+  const base = toUtcDate(londonDateParts(now));
+  base.setUTCDate(base.getUTCDate() + days);
+  return base.toISOString().slice(0, 10);
+}
+
 export function computeCertificateDates(now: Date = new Date()): CertificateDates {
   const completed = toUtcDate(londonDateParts(now));
   const renews = new Date(completed);
