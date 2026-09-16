@@ -11,27 +11,47 @@ export default function HomePage() {
         <span>Empowr ECCP</span>
       </header>
 
+      {/* Copy is the designer's coach-pathway mock-up hero, verbatim. The
+          mock-up sets this over a navy-to-blue gradient with white text, where
+          its coral accent (#ff6570) clears contrast easily. On this light cream
+          background that same coral measures 2.67:1 — under the 3:1 floor for
+          large text — so the accent uses red-dark (3.86:1) until the hero
+          itself goes dark. */}
       <section className="flex max-w-4xl flex-col items-center py-20 sm:py-28">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-blue">
-          Empowr Certified Coaching Programme
+          Empowr Coach &amp; Champion Pathway
         </p>
         <h1 className="mt-5 text-5xl font-black leading-[1.04] tracking-tight text-ink sm:text-7xl">
-          Grow from member to certified coach.
+          Grow into the coach you want to{" "}
+          <span className="text-red-dark">become.</span>
         </h1>
         <p className="mt-7 max-w-2xl text-lg leading-8 text-muted sm:text-xl">
-          Build the knowledge, facilitation skills, and community leadership to
-          deliver inclusive Empowr experiences.
+          Learn the Empowr way, develop your confidence and progress through a
+          supported pathway&mdash;from volunteering as a Champion to becoming an
+          approved Empowr Coach.
         </p>
-        <Link
-          className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)] hover:bg-blue-dark"
-          href="/login"
-        >
-          Coach sign in
-          <ArrowRight aria-hidden="true" className="size-5" />
-        </Link>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            className="inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)] hover:bg-blue-dark"
+            href="#roles"
+          >
+            Explore the roles
+            <ArrowRight aria-hidden="true" className="size-5" />
+          </Link>
+          {/* The mock-up puts "Coach login" in the header nav rather than the
+              hero, alongside a "View the checklist" primary. There is no
+              checklist section to link to yet, so login takes the second slot
+              rather than leaving a dead anchor. */}
+          <Link
+            className="inline-flex items-center gap-2 rounded-full border-2 border-blue px-6 py-3 font-extrabold text-blue-dark hover:bg-blue-pale"
+            href="/login"
+          >
+            Coach login
+          </Link>
+        </div>
       </section>
 
-      <section aria-labelledby="pathway-heading" className="w-full pb-16">
+      <section aria-labelledby="pathway-heading" className="w-full scroll-mt-8 pb-16" id="roles">
         <h2
           className="text-3xl font-black tracking-tight text-ink sm:text-4xl"
           id="pathway-heading"
