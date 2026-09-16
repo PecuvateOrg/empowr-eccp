@@ -4,13 +4,13 @@ import { certificationLevels } from "@/lib/programme";
 
 export default function HomePage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-10 sm:px-8 lg:py-16">
-      <header className="flex items-center gap-3 font-black text-blue">
+    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center px-5 py-10 text-center sm:px-8 lg:py-16">
+      <header className="flex items-center justify-center gap-3 font-black text-blue">
         <BadgeCheck aria-hidden="true" className="size-7" />
         <span>Empowr ECCP</span>
       </header>
 
-      <section className="max-w-4xl py-20 sm:py-28">
+      <section className="flex max-w-4xl flex-col items-center py-20 sm:py-28">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-red-dark">
           Empowr Certified Coaching Programme
         </p>
@@ -27,7 +27,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <section aria-labelledby="pathway-heading" className="pb-16">
+      <section aria-labelledby="pathway-heading" className="w-full pb-16">
         <h2 id="pathway-heading" className="sr-only">
           Certification pathway
         </h2>
