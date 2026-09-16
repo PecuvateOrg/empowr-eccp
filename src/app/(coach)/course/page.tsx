@@ -4,6 +4,7 @@ import { Check, Lock } from "lucide-react";
 import { getCurrentCoach } from "@/lib/auth";
 import { courseModules, PASS_MARK } from "@/lib/safeguarding-course";
 import { completedCount, getProgress, isCourseComplete } from "@/lib/progress";
+import { getAttempts } from "@/lib/assessment";
 
 export const metadata: Metadata = {
   title: "Safeguarding course — Empowr ECCP",
@@ -16,6 +17,7 @@ export default async function CoursePage() {
   const done = completedCount(progress);
   const total = courseModules.length;
   const ready = isCourseComplete(progress);
+  const hasPassed = (await getAttempts(coach.id)).some((a) => a.passed);
 
   return (
     <main className="py-10">
@@ -54,7 +56,14 @@ export default async function CoursePage() {
         </div>
 
         <div className="mt-6">
-          {ready ? (
+          {hasPassed ? (
+            <Link
+              className="inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)] hover:bg-blue-dark"
+              href="/certificate"
+            >
+              View your certificate
+            </Link>
+          ) : ready ? (
             <Link
               className="inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)] hover:bg-blue-dark"
               href="/course/assessment"

@@ -4,6 +4,7 @@ import { getProgress, isCourseComplete } from "@/lib/progress";
 import { assessmentQuestions, PASS_MARK } from "@/lib/safeguarding-course";
 import { answerKey } from "@/lib/safeguarding-answers";
 import { recordAttempt } from "@/lib/assessment";
+import { triggerCertificateIssuance } from "@/lib/certificates";
 
 // The only file in the app that imports the answer key. A page or shared
 // component importing it would ship every correct answer to the browser —
@@ -51,6 +52,15 @@ export async function POST(request: Request) {
 
   try {
     const attempt = await recordAttempt(coach.id, score, passed);
+
+    // Certificate generation (Puppeteer) is too heavy for this route's own
+    // timeout budget, so a passing attempt only hands off to a background
+    // function and returns — the coach's certificate page polls for the row
+    // rather than this response ever carrying it.
+    if (passed) {
+      await triggerCertificateIssuance(attempt.id);
+    }
+
     return NextResponse.json({
       attemptNumber: attempt.attemptNumber,
       score,

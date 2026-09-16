@@ -1,6 +1,7 @@
 import { getDb } from "./supabase";
 
 export interface AssessmentAttempt {
+  readonly id: string;
   readonly attemptNumber: number;
   readonly score: number;
   readonly passed: boolean;
@@ -10,13 +11,14 @@ export interface AssessmentAttempt {
 export async function getAttempts(coachId: string): Promise<AssessmentAttempt[]> {
   const { data, error } = await getDb()
     .from("assessment_attempts")
-    .select("attempt_number, score, passed, submitted_at")
+    .select("id, attempt_number, score, passed, submitted_at")
     .eq("coach_id", coachId)
     .order("attempt_number", { ascending: false });
 
   if (error) throw new Error(`attempt lookup failed: ${error.message}`);
 
   return (data ?? []).map((row) => ({
+    id: row.id,
     attemptNumber: row.attempt_number,
     score: row.score,
     passed: row.passed,
@@ -37,12 +39,13 @@ export async function recordAttempt(
   const { data, error } = await getDb()
     .from("assessment_attempts")
     .insert({ coach_id: coachId, attempt_number: attemptNumber, score, passed })
-    .select("attempt_number, score, passed, submitted_at")
+    .select("id, attempt_number, score, passed, submitted_at")
     .single();
 
   if (error) throw new Error(`attempt insert failed: ${error.message}`);
 
   return {
+    id: data.id,
     attemptNumber: data.attempt_number,
     score: data.score,
     passed: data.passed,

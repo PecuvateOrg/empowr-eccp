@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Check, Loader2, X } from "lucide-react";
 import type { AssessmentQuestion } from "@/lib/safeguarding-course";
@@ -71,10 +72,19 @@ export function AssessmentForm({
           <p className="text-2xl font-black text-ink">{result.score}%</p>
           <p className="mt-1 font-bold text-ink">
             {result.passed
-              ? "You passed — your certificate is on its way."
+              ? "You passed — your certificate is being generated now."
               : "Not quite — review the feedback below and try again."}
           </p>
         </div>
+
+        {result.passed ? (
+          <Link
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)] hover:bg-blue-dark"
+            href="/certificate"
+          >
+            View your certificate
+          </Link>
+        ) : null}
 
         <ol className="mt-8 space-y-4">
           {questions.map((question, index) => {
