@@ -15,19 +15,20 @@ export default function HomePage() {
           mock-up hero, verbatim. The kicker is NOT: the mock-up expands ECCP as
           "Empowr Coach & Champion Pathway", but "Empowr Certified Coaching
           Programme" is the confirmed name (owner decision 2026-09-16) and is
-          what the welcome email and the project docs use. The
-          mock-up sets this over a navy-to-blue gradient with white text, where
-          its coral accent (#ff6570) clears contrast easily. On this light cream
-          background that same coral measures 2.67:1 — under the 3:1 floor for
-          large text — so the accent uses red-dark (3.86:1) until the hero
-          itself goes dark. */}
+          what the welcome email and the project docs use.
+
+          Two further deviations, both owner decisions (2026-09-16): the
+          headline is not bolded, and its accent word is blue rather than the
+          mock-up's coral (#ff6570). Blue measures 4.47:1 on this cream
+          background — the heading renders at 48/72px, so the 3:1 large-text
+          floor applies and it clears it either way. */}
       <section className="flex max-w-4xl flex-col items-center py-20 sm:py-28">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-blue">
           Empowr Certified Coaching Programme
         </p>
-        <h1 className="mt-5 text-5xl font-black leading-[1.04] tracking-tight text-ink sm:text-7xl">
+        <h1 className="mt-5 text-5xl leading-[1.04] tracking-tight text-ink sm:text-7xl">
           Grow into the coach you want to{" "}
-          <span className="text-red-dark">become.</span>
+          <span className="text-blue">become.</span>
         </h1>
         <p className="mt-7 max-w-2xl text-lg leading-8 text-muted sm:text-xl">
           Learn the Empowr way, develop your confidence and progress through a
