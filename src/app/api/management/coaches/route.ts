@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
-    return NextResponse.json({ coach: result.coach });
+    return NextResponse.json({ coach: result.coach, invited: result.invited });
   } catch (cause) {
     console.error("[management/coaches] failed", cause);
     return NextResponse.json({ error: "Could not provision that coach." }, { status: 500 });
