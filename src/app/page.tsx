@@ -12,7 +12,7 @@ export default function HomePage() {
       </header>
 
       <section className="flex max-w-4xl flex-col items-center py-20 sm:py-28">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-red-dark">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-blue">
           Empowr Certified Coaching Programme
         </p>
         <h1 className="mt-5 text-5xl font-black leading-[1.04] tracking-tight text-ink sm:text-7xl">
@@ -32,10 +32,17 @@ export default function HomePage() {
       </section>
 
       <section aria-labelledby="pathway-heading" className="w-full pb-16">
-        <h2 id="pathway-heading" className="sr-only">
-          Certification pathway
+        <h2
+          className="text-3xl font-black tracking-tight text-ink sm:text-4xl"
+          id="pathway-heading"
+        >
+          Four levels of responsibility
         </h2>
-        <div className="grid gap-5 md:grid-cols-3">
+        <p className="mx-auto mt-4 max-w-2xl leading-8 text-muted">
+          Each role has clear boundaries. Moving to the next level requires
+          further development and formal approval.
+        </p>
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {certificationLevels.map((certification) => (
             <CertificationCard
               key={certification.level}
