@@ -10,11 +10,15 @@ export function ProvisionCoachForm() {
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<
+    { invited: boolean; email: string } | null
+  >(null);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError(null);
+    setNotice(null);
 
     const response = await fetch("/api/management/coaches", {
       method: "POST",
@@ -30,6 +34,7 @@ export function ProvisionCoachForm() {
       return;
     }
 
+    setNotice({ invited: body.invited !== false, email });
     setEmail("");
     setFullName("");
     setBusy(false);
@@ -43,7 +48,8 @@ export function ProvisionCoachForm() {
     >
       <h2 className="font-black text-ink">Provision a coach</h2>
       <p className="mt-1 text-sm text-muted">
-        They&apos;ll sign in with this email — no password, no invite step.
+        We&apos;ll email them a link to sign in. There is no password — they
+        request a code from the sign-in page.
       </p>
 
       <div className="mt-4 flex flex-col gap-4 sm:flex-row">
@@ -88,6 +94,29 @@ export function ProvisionCoachForm() {
           Add coach
         </button>
       </div>
+
+      {notice ? (
+        notice.invited ? (
+          <p
+            className="mt-4 rounded-lg bg-blue-pale px-4 py-3 text-sm font-bold text-blue-dark"
+            role="status"
+          >
+            Coach added. An invitation email is on its way to {notice.email}.
+          </p>
+        ) : (
+          // The account exists; only the email failed. Staff must be told
+          // plainly, or a provisioned coach is left waiting for a message that
+          // will never arrive.
+          <p
+            className="mt-4 rounded-lg bg-red/10 px-4 py-3 text-sm font-bold text-red-dark"
+            role="alert"
+          >
+            Coach added, but the invitation email did not send. Send{" "}
+            {notice.email} the sign-in link yourself:
+            https://eccp.empowrcic.org/login
+          </p>
+        )
+      ) : null}
 
       {error ? (
         <p

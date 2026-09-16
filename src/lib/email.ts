@@ -44,3 +44,60 @@ Empowr CIC`,
 
   console.info(`[email] otp sent to ${email}, resend id ${data?.id}`);
 }
+
+// The sign-in link is a constant, not derived from the incoming request. On
+// Netlify, request.url carries the internal deploy host rather than the public
+// domain, which has already broken a sign-in link elsewhere in this workspace.
+// A wrong link here reaches a coach's inbox, where it cannot be corrected.
+const SIGN_IN_URL = "https://eccp.empowrcic.org/login";
+
+// Sent when staff provision a coach, so the account is not silently created.
+// It carries a link, NOT a code: OTPs expire in 10 minutes and one embedded in
+// a provisioning email is stale long before anyone reads it. The coach requests
+// their own code from the sign-in page.
+export async function sendWelcomeEmail(
+  email: string,
+  fullName: string,
+): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error("RESEND_API_KEY not set");
+
+  const firstName = fullName.trim().split(/\s+/)[0] || "there";
+
+  const { data, error } = await new Resend(apiKey).emails.send({
+    from: FROM,
+    to: email,
+    subject: "Your Empowr coach account is ready",
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:sans-serif;color:#1B1B1B;max-width:480px;margin:0 auto;padding:32px 16px;">
+  <p style="font-size:15px;">Hi ${firstName},</p>
+  <p style="font-size:15px;line-height:1.6;">Your account on the Empowr Certified Coaching Programme is ready. You can now start your safeguarding training.</p>
+  <p style="text-align:center;margin:32px 0;">
+    <a href="${SIGN_IN_URL}" style="display:inline-block;background:#4a70c2;color:#fff;font-weight:700;font-size:15px;text-decoration:none;padding:14px 28px;border-radius:999px;">Sign in to start</a>
+  </p>
+  <p style="font-size:14px;line-height:1.6;color:#6B7280;">There is no password. Enter this email address (<strong>${email}</strong>) on the sign-in page and we'll send you a 6-digit code.</p>
+  <hr style="border:none;border-top:1px solid #E5E7EB;margin:32px 0;">
+  <p style="font-size:12px;color:#9CA3AF;">Empowr CIC · empowrcic.org<br>If you weren't expecting this, reply to this email and let us know.</p>
+</body>
+</html>`,
+    text: `Hi ${firstName},
+
+Your account on the Empowr Certified Coaching Programme is ready. You can now start your safeguarding training.
+
+Sign in to start: ${SIGN_IN_URL}
+
+There is no password. Enter this email address (${email}) on the sign-in page and we'll send you a 6-digit code.
+
+Empowr CIC
+If you weren't expecting this, reply to this email and let us know.`,
+  });
+
+  if (error) {
+    throw new Error(`resend rejected the send: ${error.name} — ${error.message}`);
+  }
+
+  console.info(`[email] welcome sent to ${email}, resend id ${data?.id}`);
+}

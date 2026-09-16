@@ -1,4 +1,5 @@
 import { getDb } from "./supabase";
+import { sendWelcomeEmail } from "./email";
 import type { Coach } from "./auth";
 
 export interface CoachOverview {
@@ -97,7 +98,14 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POSTGRES_UNIQUE_VIOLATION = "23505";
 
 export type ProvisionCoachResult =
-  | { ok: true; coach: { id: string; email: string; fullName: string } }
+  | {
+      ok: true;
+      coach: { id: string; email: string; fullName: string };
+      // False when the account exists but the welcome email did not send, so
+      // staff are told to pass the link on themselves rather than assuming the
+      // coach has been notified.
+      invited: boolean;
+    }
   | { ok: false; error: string };
 
 // Staff-provisioned accounts only — there is no public self-signup, per the
@@ -135,5 +143,21 @@ export async function provisionCoach(
     throw new Error(`coach provisioning failed: ${error.message}`);
   }
 
-  return { ok: true, coach: { id: data.id, email: data.email, fullName: data.full_name } };
+  // The row is already committed. A Resend failure past this point must NOT
+  // propagate: throwing here would surface as a 500 telling staff that
+  // provisioning failed, when in fact the coach account exists and only the
+  // notification is missing. Report it instead, and let staff pass the link on.
+  let invited = true;
+  try {
+    await sendWelcomeEmail(data.email, data.full_name);
+  } catch (cause) {
+    console.error("[management] coach provisioned but welcome email failed", cause);
+    invited = false;
+  }
+
+  return {
+    ok: true,
+    coach: { id: data.id, email: data.email, fullName: data.full_name },
+    invited,
+  };
 }
