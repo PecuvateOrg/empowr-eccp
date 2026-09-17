@@ -188,13 +188,13 @@ async function sendCertificateEmail(
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family:sans-serif;color:#1B1B1B;max-width:480px;margin:0 auto;padding:32px 16px;">
-  <p style="font-size:15px;">Congratulations — you've passed the Empowr safeguarding assessment.</p>
+  <p style="font-size:15px;">Congratulations — you've passed the Empowr Certified Coaching Programme (ECCP) safeguarding assessment.</p>
   <p style="font-size:15px;">Your certificate (<strong>${certificateNumber}</strong>) is attached to this email, and you can download it again any time from your ECCP certificate page.</p>
   <hr style="border:none;border-top:1px solid #E5E7EB;margin:32px 0;">
   <p style="font-size:12px;color:#9CA3AF;">Empowr CIC · empowrcic.org</p>
 </body>
 </html>`,
-    text: `Congratulations — you've passed the Empowr safeguarding assessment.
+    text: `Congratulations — you've passed the Empowr Certified Coaching Programme (ECCP) safeguarding assessment.
 
 Your certificate (${certificateNumber}) is attached to this email, and you can download it again any time from your ECCP certificate page.
 

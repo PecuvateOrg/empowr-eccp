@@ -120,7 +120,7 @@ function renewalEmailHtml(certificate: any): string {
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family:sans-serif;color:#1B1B1B;max-width:480px;margin:0 auto;padding:32px 16px;">
-  <p style="font-size:15px;">Your Empowr ECCP safeguarding certificate is due for renewal.</p>
+  <p style="font-size:15px;">Your Empowr Certified Coaching Programme (ECCP) safeguarding certificate is due for renewal.</p>
   <p style="font-size:15px;">Certificate <strong>${certificate.certificate_number}</strong> for
   <em>${COURSE_TITLE}</em> renews on <strong>${certificate.renews_at}</strong>. Please retake the
   course and assessment before then to keep your certification current.</p>
@@ -132,7 +132,7 @@ function renewalEmailHtml(certificate: any): string {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renewalEmailText(certificate: any): string {
-  return `Your Empowr ECCP safeguarding certificate is due for renewal.
+  return `Your Empowr Certified Coaching Programme (ECCP) safeguarding certificate is due for renewal.
 
 Certificate ${certificate.certificate_number} for ${COURSE_TITLE} renews on ${certificate.renews_at}. Please retake the course and assessment before then to keep your certification current.
 

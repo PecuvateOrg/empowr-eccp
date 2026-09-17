@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Loader2, X } from "lucide-react";
 import type { AssessmentQuestion } from "@/lib/safeguarding-course";
 
@@ -31,6 +31,13 @@ export function AssessmentForm({
   const [result, setResult] = useState<SubmitResponse | null>(null);
 
   const allAnswered = selected.every((value) => value !== null);
+
+  // Submitting from partway down a 20-question list leaves the page scrolled
+  // there — without this, the pass/fail banner and the certificate link
+  // render off-screen above the fold and can go unnoticed.
+  useEffect(() => {
+    if (result) window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [result]);
 
   async function submit() {
     setBusy(true);
@@ -119,7 +126,14 @@ export function AssessmentForm({
           })}
         </ol>
 
-        {!result.passed ? (
+        {result.passed ? (
+          <Link
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)] hover:bg-blue-dark"
+            href="/certificate"
+          >
+            View your certificate
+          </Link>
+        ) : (
           <button
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue px-6 py-3 font-extrabold text-white shadow-[0_4px_16px_rgb(74_112_194_/_0.26)] hover:bg-blue-dark"
             onClick={retake}
@@ -127,7 +141,7 @@ export function AssessmentForm({
           >
             Retake the assessment
           </button>
-        ) : null}
+        )}
       </div>
     );
   }

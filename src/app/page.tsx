@@ -1,15 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 import { CertificationCard } from "@/components/CertificationCard";
 import { certificationLevels } from "@/lib/programme";
 
 export default function HomePage() {
   return (
     <main className="flex min-h-screen w-full flex-col items-center">
-      <header className="flex w-full max-w-6xl items-center justify-center gap-3 px-5 pt-10 font-black text-blue sm:px-8">
-        <BadgeCheck aria-hidden="true" className="size-7" />
-        <span>Empowr ECCP</span>
+      <header className="flex w-full max-w-6xl justify-center px-5 pt-10 sm:px-8">
+        <BrandMark label="ECCP" />
       </header>
 
       {/* Hero ported from the designer's coach-pathway mock-up: cream ground,
