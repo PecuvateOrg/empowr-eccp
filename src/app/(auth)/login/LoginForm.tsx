@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { BadgeCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 
 export function LoginForm() {
   const router = useRouter();
@@ -53,10 +54,7 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-[0_4px_24px_rgb(27_27_27_/_0.06)]">
-      <div className="flex items-center gap-2.5 font-black text-blue">
-        <BadgeCheck aria-hidden="true" className="size-6" />
-        <span>Empowr ECCP</span>
-      </div>
+      <BrandMark label="ECCP" />
 
       {step === "email" ? (
         <form onSubmit={requestCode}>
