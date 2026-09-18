@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, Lock } from "lucide-react";
+import { Check, Clock, Lock } from "lucide-react";
 import { getCurrentCoach } from "@/lib/auth";
 import { courseModules, PASS_MARK } from "@/lib/safeguarding-course";
 import { completedCount, getProgress, isCourseComplete } from "@/lib/progress";
 import { getAttempts } from "@/lib/assessment";
+import { courses } from "@/lib/courses";
 
 export const metadata: Metadata = {
   title: "Safeguarding course — Empowr ECCP",
@@ -115,6 +116,34 @@ export default async function CoursePage() {
           );
         })}
       </ol>
+
+      <div className="mt-12 border-t border-border pt-8">
+        <h2 className="text-lg font-black text-ink">More training</h2>
+        <ol className="mt-4 space-y-3">
+          {courses
+            .filter((course) => course.status === "coming-soon")
+            .map((course) => (
+              <li key={course.slug}>
+                <Link
+                  className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 opacity-70 transition hover:opacity-100 hover:border-blue"
+                  href={`/course/${course.slug}`}
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-pale text-blue">
+                    <Clock aria-hidden="true" className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-black uppercase tracking-[0.14em] text-muted">
+                      Coming soon
+                    </span>
+                    <span className="block font-bold text-ink">
+                      {course.shortLabel}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+        </ol>
+      </div>
     </main>
   );
 }
