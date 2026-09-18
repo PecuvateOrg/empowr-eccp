@@ -4,8 +4,8 @@ This workspace owns ECCP deployment, environment configuration, and release chec
 
 ## Deployment
 
-- Platform: Netlify
-- Domain: not yet assigned
+- Platform: Netlify (`empowr-eccp`)
+- Domain: `eccp.empowrcic.org`
 - Production branch: `main`
 - Repository base directory: `src/`
 - Build command: `pnpm run build`
@@ -14,7 +14,7 @@ This workspace owns ECCP deployment, environment configuration, and release chec
 
 ## Environment Variables
 
-No environment variables are required by the initial scaffold. Document every future variable here and add its blank name to `src/.env.example`.
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secret), `RESEND_API_KEY` (secret) — all `production` context on the `empowr-eccp` Netlify site. See `_config/registry/netlify-sites.md` for details.
 
 ## Process
 
