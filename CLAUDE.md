@@ -2,7 +2,8 @@
 
 Empowr Certified Coaching Programme — the web platform for Empowr's member-to-coach certification pathway.
 
-This file is the map. Workspace detail lives in each `CONTEXT.md`.
+This file is Layer 0 — routing only. Read `NON-NEGOTIABLES.md` before doing anything; project
+detail lives in `CONTEXT.md`.
 
 ## Routing
 
@@ -16,12 +17,6 @@ This file is the map. Workspace detail lives in each `CONTEXT.md`.
 ## Cross-Workspace Flows
 
 - Feature delivery: `planning/spec/` → `planning/architecture/` → `src/` → `ops/`
-
-## Naming Conventions
-
-- Components: PascalCase (`CertificationCard.tsx`)
-- Route segments and utilities: kebab-case
-- Decision records: `YYYY-MM-DD-decision-title.md`
 
 ## File Placement
 
@@ -38,8 +33,7 @@ This file is the map. Workspace detail lives in each `CONTEXT.md`.
 
 ## Public Repository Documents
 
-- Private operational documents live at `../workspace-docs/empowr-eccp/DEVLOG.md` and `../workspace-docs/empowr-eccp/memory.md`.
-- Never create or commit `DEVLOG.md` or `memory.md` in this public repository.
+- Private operational documents live at `../workspace-docs/empowr-eccp/DEVLOG.md` and `../workspace-docs/empowr-eccp/memory.md`. See `NON-NEGOTIABLES.md` for what must never be committed here.
 
 ## Deployment
 
