@@ -4,7 +4,7 @@ This file catalogs reusable skills and slash commands used by Empowr ECCP.
 
 ## Workspace Skills
 
-Shared skills are defined in `F:\Projects\_config\skills\` and catalogued in `F:\Projects\Frameworks\MWP Framework\skills\skills-index.md`.
+Shared skills are defined in `~/projects/_config/skills/` and catalogued in `~/projects/Frameworks/MWP Framework\skills\skills-index.md`.
 
 - `/webapp-testing` — verify local UI behaviour, accessibility, and browser output
 - `/netlify-deploy` — create or update the Netlify site and domain

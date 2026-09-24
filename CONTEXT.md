@@ -18,7 +18,7 @@ Empowr ECCP is the planned web platform for the Empowr Certified Coaching Progra
 
 ## Source of Truth
 
-Programme identity and terminology come from `F:\Projects\vaults\EMPOWR CIC\entities\eccp.md`. Coaching appointments, responsibilities, and payment are separate from certification and come from the KB's coaching programme delivery framework.
+Programme identity and terminology come from `~/projects/vaults/EMPOWR CIC\entities\eccp.md`. Coaching appointments, responsibilities, and payment are separate from certification and come from the KB's coaching programme delivery framework.
 
 ## External Services
 

@@ -4,7 +4,7 @@ This file defines autonomous or semi-autonomous roles local to Empowr ECCP, incl
 
 ## Shared Roles
 
-Workspace-wide recurring roles are defined in `F:\Projects\_config\registry\agents.md`. Reference those roles by name rather than redefining them here.
+Workspace-wide recurring roles are defined in `~/projects/_config/registry/agents.md`. Reference those roles by name rather than redefining them here.
 
 ## Project Roles
 
