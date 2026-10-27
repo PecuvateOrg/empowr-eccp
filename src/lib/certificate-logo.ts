@@ -1,4 +1,4 @@
-// Empowr eye logo, from the workspace brand asset registry (_brand/logos/empowr-logo-dark-transparent.png).
+// Empowr eye logo, from the workspace brand assets (Empowr CIC/company/identity/brand-assets/logos/empowr-logo-dark-transparent.png).
 // Embedded as a data URI so the certificate template is self-contained for headless
 // Chrome (page.setContent has no base URL to resolve a relative <img src> against).
 export const EMPOWR_LOGO_DATA_URI =
