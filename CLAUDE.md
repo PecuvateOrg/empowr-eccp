@@ -14,6 +14,16 @@ detail lives in `CONTEXT.md`.
 | Deployment or going live | `ops/` | `CONTEXT.md` | `/netlify-deploy`, `/netlify-supabase-check` |
 | Brand or favicon setup | `ops/` | `CONTEXT.md` | `/init-brand` |
 
+## Shared Memory
+
+Adopts `Frameworks/MWP Framework/spec/session-memory.md` (2026-10-05). This repo is public, so
+all of these live in the **private** hub at `../workspace-docs/empowr-eccp/`, never here:
+
+- Session bridge (read at start, rewrite in place at close, ≤1,000 words): `memory.md`
+- Decisions: `decisions.md`
+- Traps and "do not" rules — read before touching the area: `gotchas.md`
+- Session history: `DEVLOG.md`; pre-bridge memory, search only: `archive/memory-history-to-2026-10-05.md`
+
 ## Cross-Workspace Flows
 
 - Feature delivery: `planning/spec/` → `planning/architecture/` → `src/` → `ops/`
