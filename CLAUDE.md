@@ -9,6 +9,7 @@ detail lives in `CONTEXT.md`.
 
 | Task | Go to | Read | Skills |
 |---|---|---|---|
+| **Design: look, colours, components** | `design-system/` | `design-system/MASTER.md` (then the Empowr brand kit it names) | — |
 | Feature specification or architecture | `planning/` | `CONTEXT.md` | — |
 | UI, routes, components, or application code | `src/` | `CONTEXT.md` | `/webapp-testing` |
 | Deployment or going live | `ops/` | `CONTEXT.md` | `/netlify-deploy`, `/netlify-supabase-check` |
