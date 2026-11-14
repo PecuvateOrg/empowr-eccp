@@ -21,12 +21,15 @@ Coach-facing platform with a brand mark component (`BrandMark.tsx`).
 
 ## Current state vs the brand kit
 
-- Empowr blue ✅; Nunito plus Inter.
+- Empowr blue ✅; Nunito ✅.
 - Red text used 13 times.
 
 ---
 
 ## Decision log
+
+### 2026-11-14 — Correction
+- The first pass said Inter was loaded as a second font here. It is not (the scan matched words like "Internal"); only the CRM loads Inter.
 
 ### 2026-11-14 — Recorded
 - First design record, from the group-wide design records pass. No code changed; gaps below
@@ -35,4 +38,3 @@ Coach-facing platform with a brand mark component (`BrandMark.tsx`).
 ## Open questions
 
 - [ ] Red text fails contrast (`--red` 2.94:1, `--red-dark` 4.13:1). Per the brand kit, error and warning text becomes `--black` in a `--red-soft` box with a red icon.
-- [ ] Inter is loaded alongside Nunito: drop it (one font, Nunito).
