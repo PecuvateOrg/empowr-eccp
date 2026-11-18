@@ -36,7 +36,7 @@ export function validateAvailability(value: CoachAvailability): string[] {
     }
   }
   for (const day of [0, 1, 2, 3, 4, 5, 6] as Weekday[]) {
-    const windows = value.weekly.filter((w) => w.weekday === day &&
+    const windows = value.weekly.filter((w) => w && typeof w === "object" && w.weekday === day &&
       validWindow(w.start, w.end)).sort((a, b) => minutes(a.start) - minutes(b.start));
     for (let i = 1; i < windows.length; i++) {
       if (minutes(windows[i].start) < minutes(windows[i - 1].end)) {
