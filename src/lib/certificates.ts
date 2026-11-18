@@ -1,4 +1,5 @@
 import { getDb } from "./supabase";
+import { runCertificateIssuance } from "@/lib/issue-certificate";
 
 export const CERTIFICATE_BUCKET = "eccp-certificates";
 const SIGNED_URL_TTL_SECONDS = 300;
@@ -62,6 +63,23 @@ export async function getSignedCertificateUrl(pdfStoragePath: string): Promise<s
 // background function and a network failure here look identical to the coach
 // (no certificate ever appears) with no other trace to distinguish them.
 export async function triggerCertificateIssuance(attemptId: string): Promise<boolean> {
+  // Amplify: no background functions, and the Lambda freezes once the response
+  // is sent — so issue inline and make the caller wait. Set explicitly in the
+  // Amplify build (amplify.yml), never inferred from a missing Netlify var.
+  if (process.env.ECCP_INLINE_ISSUANCE === "1") {
+    try {
+      await runCertificateIssuance(attemptId);
+      console.log("[certificates] issued inline", { attemptId });
+      return true;
+    } catch (cause) {
+      console.error("[certificates] inline issuance failed", {
+        attemptId,
+        error: cause instanceof Error ? cause.message : String(cause),
+      });
+      return false;
+    }
+  }
+
   const base = process.env.URL ?? process.env.DEPLOY_URL;
   if (!base) {
     console.error("[certificates] no site URL env var — cannot trigger issuance", { attemptId });

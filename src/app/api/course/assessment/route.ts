@@ -53,10 +53,10 @@ export async function POST(request: Request) {
   try {
     const attempt = await recordAttempt(coach.id, score, passed);
 
-    // Certificate generation (Puppeteer) is too heavy for this route's own
-    // timeout budget, so a passing attempt only hands off to a background
-    // function and returns — the coach's certificate page polls for the row
-    // rather than this response ever carrying it.
+    // Netlify: hands off to a background function and returns; the coach's
+    // certificate page polls for the row. Amplify: issues inline before this
+    // returns (see triggerCertificateIssuance). Either way a failure leaves
+    // the certificate page's retry action as the recovery path.
     if (passed) {
       await triggerCertificateIssuance(attempt.id);
     }
