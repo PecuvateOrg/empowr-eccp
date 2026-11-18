@@ -12,16 +12,17 @@ const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
 const validWindow = (start: string, end: string) =>
-  timePattern.test(start) && timePattern.test(end) && minutes(start) < minutes(end);
+  typeof start === "string" && typeof end === "string" && timePattern.test(start) && timePattern.test(end) && minutes(start) < minutes(end);
 
 export function validateAvailability(value: CoachAvailability): string[] {
   const errors: string[] = [];
   for (const [i, window] of value.weekly.entries()) {
-    if (!Number.isInteger(window.weekday) || window.weekday < 0 || window.weekday > 6 ||
+    if (!window || typeof window !== "object" || !Number.isInteger(window.weekday) || window.weekday < 0 || window.weekday > 6 ||
       !validWindow(window.start, window.end)) errors.push(`Invalid weekly window ${i + 1}`);
   }
   const dates = new Set<string>();
   for (const [i, exception] of value.exceptions.entries()) {
+    if (!exception || typeof exception !== "object" || typeof exception.date !== "string") { errors.push(`Invalid exception ${i + 1}`); continue; }
     const parsed = new Date(`${exception.date}T12:00:00Z`);
     if (!datePattern.test(exception.date) || Number.isNaN(parsed.valueOf()) ||
       parsed.toISOString().slice(0, 10) !== exception.date) {
