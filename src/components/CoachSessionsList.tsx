@@ -8,6 +8,10 @@ export function CoachSessionsList() {
  const [loading, setLoading] = useState(true);
  const [loadFailed, setLoadFailed] = useState(false);
  const [busy, setBusy] = useState<string | null>(null);
+ const [filter, setFilter] = useState<"upcoming" | "all" | "action">("upcoming");
+ const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+ const visible = items.filter((item) => filter === "all" || (filter === "action" ? item.status === "offered" : item.date >= today && !["cancelled", "declined", "withdrawn", "completed"].includes(item.status)));
+ const pending = items.filter((item) => item.status === "offered").length;
  const [reasons, setReasons] = useState<Record<string,string>>({});
  async function load() {
   const response = await fetch("/api/coach/assignments", { cache: "no-store" });
@@ -43,7 +47,17 @@ export function CoachSessionsList() {
   {loading && <p role="status" className="text-muted">Loading your sessions…</p>}
   {!loading && !loadFailed && !items.length && <p className="text-muted">You have no assigned sessions at the moment.</p>}
   {loadFailed && <p className="text-sm text-muted">Your sessions could not be loaded. Please try again later or contact the team.</p>}
-  {!loadFailed && items.map((item) => <article key={item.id} className="rounded-xl border border-border p-5">
+  {!loading && !loadFailed && <div className="space-y-3">
+   <p className="text-sm text-muted">{pending} offer{pending === 1 ? "" : "s"} awaiting your response</p>
+   <div className="flex flex-wrap gap-2" aria-label="Filter sessions">
+    {(["upcoming", "action", "all"] as const).map((option) => <button key={option} type="button" aria-pressed={filter === option} onClick={() => setFilter(option)}
+     className={`rounded-full border px-4 py-2 text-sm ${filter === option ? "border-blue bg-blue text-white" : "border-border"}`}>
+     {option === "upcoming" ? "Upcoming" : option === "action" ? "Needs response" : "All sessions"}
+    </button>)}
+   </div>
+   {!visible.length && !!items.length && <p className="text-muted">No sessions match this filter.</p>}
+  </div>}
+  {!loadFailed && visible.map((item) => <article key={item.id} className="rounded-xl border border-border p-5">
    <h2 className="font-bold">{item.sessionId}</h2>
    <p className="mt-1 text-sm">{item.date} · {item.start}–{item.end} (London time)</p>
    <p className="mt-1 text-sm">Status: <strong>{item.status}</strong></p>
