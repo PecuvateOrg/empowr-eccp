@@ -26,6 +26,17 @@ export default async function ManagementPage() {
       <p className="mt-2 text-sm text-muted">
         {roster.length} coach{roster.length === 1 ? "" : "es"} provisioned.
       </p>
+      <p className="mt-2 text-sm text-muted">
+        <a
+          href="/api/management/certificate-preview"
+          target="_blank"
+          rel="noopener"
+          className="font-bold text-ink underline"
+        >
+          Test certificate PDF
+        </a>{" "}
+        — renders a sample; nothing is saved, emailed or numbered.
+      </p>
 
       <ProvisionCoachForm />
 

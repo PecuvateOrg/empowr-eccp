@@ -113,7 +113,7 @@ async function issueCertificate(db: any, attemptId: string): Promise<void> {
   await sendCertificateEmail(coach.email, certificateNumber, pdf);
 }
 
-async function renderCertificatePdf(html: string): Promise<Buffer> {
+export async function renderCertificatePdf(html: string): Promise<Buffer> {
   // Netlify and Amplify both run on Lambda; check both markers so a missing
   // one can't send production to a local Chrome path that does not exist.
   // Same dual executablePath pattern as Freelancer-Workflow's
