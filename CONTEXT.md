@@ -8,7 +8,7 @@ Empowr ECCP is the planned web platform for the Empowr Certified Coaching Progra
 |---|---|
 | `planning/` | Product scope, architecture, and decision records |
 | `src/` | Self-contained Next.js application; run all pnpm commands here |
-| `ops/` | Netlify deployment, environment variables, and operational setup |
+| `ops/` | AWS Amplify deployment, environment variables, schedules and operational setup |
 
 ## Audience
 
