@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import type { AssignmentView } from "@/lib/coach-assignment-storage";
 import { londonSessionStartUtc } from "@/lib/london-session-time";
+import type { AssignableSession } from "@/lib/assignable-sessions";
 export function StaffAssignmentsList() {
  const [items, setItems] = useState<AssignmentView[]>([]);
  const [error, setError] = useState("");
@@ -10,6 +11,9 @@ export function StaffAssignmentsList() {
  const [form, setForm] = useState({ coachId: "", sessionId: "", date: "", start: "", end: "" });
  const [coaches, setCoaches] = useState<{id:string;full_name:string;email:string}[]>([]);
  const [directoryError, setDirectoryError] = useState(false);
+ const [sessions, setSessions] = useState<AssignableSession[]>([]);
+ const [sessionSourceReady, setSessionSourceReady] = useState(false);
+ const [selectedSession, setSelectedSession] = useState("");
  const startAtUtc = londonSessionStartUtc(form.date, form.start);
  const [saving, setSaving] = useState(false);
  const [statusFilter, setStatusFilter] = useState("all");
@@ -48,6 +52,10 @@ export function StaffAssignmentsList() {
   finally { setSaving(false); }
  }
  useEffect(() => {
+  fetch("/api/management/assignments/sessions", { cache: "no-store" })
+   .then(async (response) => { if (!response.ok) throw new Error("Not configured"); return response.json(); })
+   .then((data) => { setSessions(data.sessions); setSessionSourceReady(true); })
+   .catch(() => setSessionSourceReady(false));
   fetch("/api/management/assignments/coaches", { cache: "no-store" })
    .then(async (response) => { if (!response.ok) throw new Error("Unavailable"); return response.json(); })
    .then((data) => setCoaches(data.coaches))
@@ -69,9 +77,21 @@ export function StaffAssignmentsList() {
     </select>
    </label>
    {directoryError && <p role="status" className="text-sm text-muted">Coach directory is currently unavailable.</p>}
+   {sessionSourceReady && <label className="block text-sm">Choose a scheduled session
+    <select value={selectedSession} onChange={(event) => {
+     const id = event.target.value;
+     setSelectedSession(id);
+     const session = sessions.find((entry) => entry.id === id);
+     if (session) setForm((current) => ({ ...current, sessionId: session.id, date: session.date, start: session.start, end: session.end }));
+    }} className="mt-1 block w-full rounded border border-border bg-transparent p-2">
+     <option value="">Select a session</option>
+     {sessions.map((session) => <option key={session.id} value={session.id}>{session.title} · {session.date} · {session.start} · {session.venue}</option>)}
+    </select>
+   </label>}
+   {!sessionSourceReady && <p className="text-sm text-muted">Live session selection is awaiting connection to Empowr’s booking system. Manual session references are available for staging testing only.</p>}
    {([["sessionId","Session reference","text"],["date","Session date","date"],["start","Start time (London)","time"],["end","End time (London)","time"]] as const).map(([key,label,type]) =>
     <label key={key} className="block text-sm">{label}
-     <input required type={type} value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+     <input required type={type} readOnly={sessionSourceReady} value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
       className="mt-1 block w-full rounded border border-border bg-transparent p-2" />
     </label>)}
    {form.date && form.start && !startAtUtc && <p className="text-sm text-muted">This date or time is invalid or ambiguous due to daylight saving. Please choose another time.</p>}
