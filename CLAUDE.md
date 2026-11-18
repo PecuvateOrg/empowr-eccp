@@ -48,7 +48,8 @@ all of these live in the **private** hub at `../workspace-docs/empowr-eccp/`, ne
 
 ## Deployment
 
-- Platform: Netlify
+- Platform: AWS Amplify, London (eu-west-2), since 2026-11-18. The Netlify site is a fallback until it is retired
+- Scheduled jobs: renewal reminders via AWS EventBridge → `POST /api/cron/renewal-reminders` (08:00 UTC)
 - Domain: eccp.empowrcic.org
 - Branch: main
 - Base directory: src/
