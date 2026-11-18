@@ -13,7 +13,14 @@ export function CoachSessionsList() {
   const result = await response.json();
   setItems(result.assignments);
  }
- useEffect(() => { load().catch(() => setMessage("Scheduling storage is not enabled yet.")); }, []);
+ useEffect(() => {
+  let cancelled = false;
+  fetch("/api/coach/assignments", { cache: "no-store" })
+   .then(async (response) => { if (!response.ok) throw new Error("Unavailable"); return response.json(); })
+   .then((result) => { if (!cancelled) setItems(result.assignments); })
+   .catch(() => { if (!cancelled) setMessage("Scheduling storage is not enabled yet."); });
+  return () => { cancelled = true; };
+ }, []);
  async function decide(id: string, decision: "accept" | "decline" | "withdraw") {
   setBusy(id); setMessage("");
   try {
