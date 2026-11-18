@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { validateCoachContactProfile } from "@/lib/coach-profile";
 
 export function CoachProfileForm() {
@@ -10,7 +10,17 @@ export function CoachProfileForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
 
-  function handleValidate(event: FormEvent<HTMLFormElement>) {
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    fetch("/api/coach/profile", { cache: "no-store" }).then(async (response) => {
+      if (!response.ok) throw new Error("Profile storage unavailable");
+      return response.json();
+    }).then(({ profile }) => {
+      if (profile) { setPhone(profile.phone); setEmergencyContactName(profile.emergencyContactName); setEmergencyContactPhone(profile.emergencyContactPhone); }
+    }).catch(() => setMessage("Profile storage is not ready. Please try again later."));
+  }, []);
+
+  async function handleValidate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const result = validateCoachContactProfile({
       phone,
@@ -23,16 +33,20 @@ export function CoachProfileForm() {
       return;
     }
     setErrors({});
-    setMessage(
-      "Details validated. Saving will be enabled after the secure profile database connection is ready. Nothing has been submitted.",
-    );
+    setBusy(true);
+    try {
+      const response = await fetch("/api/coach/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(result.value) });
+      if (!response.ok) throw new Error("Save failed");
+      setMessage("Your contact details have been saved.");
+    } catch { setMessage("Unable to save. No changes were confirmed. Please try again later."); }
+    finally { setBusy(false); }
   }
 
   return (
     <section className="mt-6 rounded-xl border border-border p-6">
       <h2 className="text-lg font-bold">Contact details</h2>
       <p className="mt-2 text-sm text-muted">
-        This form is a preview. Your entries are not saved or sent to Empowr yet.
+        Update your contact and emergency contact details. Saving requires the new database tables to be enabled.
       </p>
       <form onSubmit={handleValidate} className="mt-6 space-y-5" noValidate>
         <div>
@@ -56,8 +70,8 @@ export function CoachProfileForm() {
             className="mt-2 w-full rounded-lg border border-border bg-transparent p-3" />
           {errors.emergencyContactPhone && <p role="alert" className="mt-1 text-sm text-red-600">{errors.emergencyContactPhone}</p>}
         </div>
-        <button type="submit" className="rounded-lg bg-blue px-5 py-3 font-bold text-white">
-          Validate details
+        <button type="submit" disabled={busy} className="rounded-lg bg-blue px-5 py-3 font-bold text-white disabled:opacity-50">
+          {busy ? "Saving..." : "Save details"}
         </button>
         {message && <p role="status" className="text-sm text-muted">{message}</p>}
       </form>
