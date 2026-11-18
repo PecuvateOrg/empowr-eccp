@@ -6,6 +6,15 @@ export function StaffAssignmentsList() {
  const [error, setError] = useState("");
  const [form, setForm] = useState({ coachId: "", sessionId: "", date: "", start: "", end: "", startAtUtc: "" });
  const [saving, setSaving] = useState(false);
+ const [conflicts, setConflicts] = useState<{assignmentId:string;sessionId:string;date:string}[]>([]);
+ async function checkConflicts() {
+  try {
+   const response = await fetch("/api/management/assignments/conflicts", { cache: "no-store" });
+   if (!response.ok) throw new Error("Unavailable");
+   setConflicts((await response.json()).conflicts);
+   setError("Conflict preview refreshed.");
+  } catch { setError("Conflict preview is not available until staging database setup."); }
+ }
  async function offer(event: React.FormEvent<HTMLFormElement>) {
   event.preventDefault(); setSaving(true); setError("");
   try {
@@ -34,7 +43,13 @@ export function StaffAssignmentsList() {
     </label>)}
    <button disabled={saving} type="submit" className="rounded bg-blue px-4 py-2 text-white disabled:opacity-50">{saving ? "Saving..." : "Offer session"}</button>
   </form>
-  {error && <p role="alert">{error}</p>}
+  <div className="rounded-xl border border-border p-4">
+   <h2 className="font-bold">Availability conflict preview</h2>
+   <p className="text-sm text-muted">Read-only check of offered and accepted assignments. This does not send notifications.</p>
+   <button onClick={checkConflicts} className="mt-2 rounded border border-border px-4 py-2">Check conflicts</button>
+   {conflicts.map((c) => <p key={c.assignmentId} className="mt-2 text-sm">Conflict: {c.sessionId} on {c.date} (assignment {c.assignmentId})</p>)}
+  </div>
+  {error && <p role="status">{error}</p>}
   {!items.length && <p className="text-muted">No assignments available.</p>}
   {items.map((item) => <article key={item.id} className="rounded-xl border border-border p-4">
    <h2 className="font-bold">{item.sessionId}</h2>
