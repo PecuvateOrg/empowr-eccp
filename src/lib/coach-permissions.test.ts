@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { hasCoachPermission } from "./coach-permissions.ts";
-import type { AdminRole, CoachPermission } from "./coach-permissions.ts";
+import { hasCoachPermission } from "./coach-permissions";
+import type { AdminRole, CoachPermission } from "./coach-permissions";
 
 const roles: AdminRole[] = ["founder", "super_admin", "admin", "coach"];
 const permissions: CoachPermission[] = [
