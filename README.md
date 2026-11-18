@@ -44,9 +44,11 @@ Copy `.env.example` to `.env.local` when environment variables are introduced. N
 
 ## Deployment
 
-- Platform: Netlify
-- Branch: `main`
-- Base directory: `src/`
-- Domain: not yet assigned
+- Platform: **AWS Amplify, London (eu-west-2), since 2026-11-18**. Pushing to `main` deploys.
+- Build: `amplify.yml` at the repo root (pnpm, Node 22, base directory `src/`)
+- Domain: `eccp.empowrcic.org`
+- Secrets: AWS SSM, written to `.env.production` at build. There are no Netlify environment variables any more.
+- Background work: certificates are issued inside the request (`ECCP_INLINE_ISSUANCE=1`). Renewal reminders run daily at 08:00 UTC from AWS EventBridge via `POST /api/cron/renewal-reminders`.
+- The Netlify site, `netlify.toml` and `src/netlify/` are a fallback only, to be removed about 2026-12-02. Do not add new Netlify functions or Netlify-only environment variables.
 
 See `CLAUDE.md` and `ops/CONTEXT.md` for full project and deployment guidance.

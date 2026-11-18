@@ -7,8 +7,7 @@ This file catalogs reusable skills and slash commands used by Empowr ECCP.
 Shared skills are defined in `~/projects/_config/skills/` and catalogued in `~/projects/Frameworks/MWP Framework\skills\skills-index.md`.
 
 - `/webapp-testing` — verify local UI behaviour, accessibility, and browser output
-- `/netlify-deploy` — create or update the Netlify site and domain
-- `/netlify-supabase-check` — audit a future Netlify and Supabase integration
+- Hosting is AWS Amplify (see `ops/CONTEXT.md`). The Netlify skills no longer apply to this project.
 - `/init-brand` — add Empowr favicons, manifest, and approved brand assets
 - `/pre-build-check` — validate build structure and frontend metadata
 - `/pre-deploy-security` — run the security gate before deployment
