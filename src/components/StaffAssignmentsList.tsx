@@ -8,6 +8,10 @@ export function StaffAssignmentsList() {
  const [loadFailed, setLoadFailed] = useState(false);
  const [form, setForm] = useState({ coachId: "", sessionId: "", date: "", start: "", end: "", startAtUtc: "" });
  const [saving, setSaving] = useState(false);
+ const [statusFilter, setStatusFilter] = useState("all");
+ const visible = items.filter((item) => statusFilter === "all" || item.status === statusFilter);
+ const offeredCount = items.filter((item) => item.status === "offered").length;
+ const acceptedCount = items.filter((item) => item.status === "accepted").length;
  const [alerts, setAlerts] = useState<{id:string;assignment_id:string;alert_type:string;status:string;created_at:string}[]>([]);
  async function refreshAlerts() {
   try {
@@ -70,7 +74,17 @@ export function StaffAssignmentsList() {
   {error && <p role="status">{error}</p>}
   {loading && <p role="status" className="text-muted">Loading assignments…</p>}
   {!loading && !loadFailed && !items.length && <p className="text-muted">No assignments available.</p>}
-  {!loadFailed && items.map((item) => <article key={item.id} className="rounded-xl border border-border p-4">
+  {!loading && !loadFailed && <div className="space-y-3 rounded-xl border border-border p-4">
+   <h2 className="font-bold">Assignment overview</h2>
+   <p className="text-sm text-muted">{offeredCount} awaiting response · {acceptedCount} accepted · {items.length} total</p>
+   <label className="block text-sm">Filter by status
+    <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-1 block w-full rounded border border-border bg-transparent p-2">
+     {["all","offered","accepted","declined","withdrawn","completed","cancelled"].map((status) => <option key={status} value={status}>{status === "all" ? "All assignments" : status}</option>)}
+    </select>
+   </label>
+   {!visible.length && !!items.length && <p className="text-sm text-muted">No assignments match this status.</p>}
+  </div>}
+  {!loadFailed && visible.map((item) => <article key={item.id} className="rounded-xl border border-border p-4">
    <h2 className="font-bold">{item.sessionId}</h2>
    <p className="text-sm">{item.date} · {item.start}–{item.end} · Coach ID: {item.coachId}</p>
    <p className="text-sm">Status: {item.status}</p>
