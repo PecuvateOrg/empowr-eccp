@@ -35,8 +35,9 @@ export default async function handler(): Promise<Response> {
   }
 }
 
-export const config: Config = {
-  // 08:00 UTC daily — well clear of the certificate-issuance path and any
-  // deploy window, ahead of the working day.
-  schedule: "0 8 * * *",
-};
+// Schedule REMOVED 2026-11-18: reminders now run on AWS (EventBridge rule
+// eccp-renewal-reminders-daily → POST /api/cron/renewal-reminders, 08:00 UTC).
+// Only one scheduler may be live. This function stays only as the Netlify
+// fallback until that site is retired; restore `schedule: "0 8 * * *"` here
+// ONLY if the AWS rule is disabled at the same time.
+export const config: Config = {};
