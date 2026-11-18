@@ -5,6 +5,8 @@ import type { AssignmentView } from "@/lib/coach-assignment-storage";
 export function CoachSessionsList() {
  const [items, setItems] = useState<AssignmentView[]>([]);
  const [message, setMessage] = useState("");
+ const [loading, setLoading] = useState(true);
+ const [loadFailed, setLoadFailed] = useState(false);
  const [busy, setBusy] = useState<string | null>(null);
  const [reasons, setReasons] = useState<Record<string,string>>({});
  async function load() {
@@ -12,13 +14,15 @@ export function CoachSessionsList() {
   if (!response.ok) throw new Error("Scheduling is not available yet");
   const result = await response.json();
   setItems(result.assignments);
+  setLoadFailed(false);
  }
  useEffect(() => {
   let cancelled = false;
   fetch("/api/coach/assignments", { cache: "no-store" })
    .then(async (response) => { if (!response.ok) throw new Error("Unavailable"); return response.json(); })
-   .then((result) => { if (!cancelled) setItems(result.assignments); })
-   .catch(() => { if (!cancelled) setMessage("Scheduling storage is not enabled yet."); });
+   .then((result) => { if (!cancelled) { setItems(result.assignments); setLoadFailed(false); } })
+   .catch(() => { if (!cancelled) { setLoadFailed(true); setMessage("Scheduling storage is not enabled yet."); } })
+   .finally(() => { if (!cancelled) setLoading(false); });
   return () => { cancelled = true; };
  }, []);
  async function decide(id: string, decision: "accept" | "decline" | "withdraw") {
@@ -36,8 +40,10 @@ export function CoachSessionsList() {
  }
  return <section className="mt-8 space-y-4">
   {message && <p role="status" className="text-sm">{message}</p>}
-  {!items.length && <p className="text-muted">No assigned sessions are currently shown.</p>}
-  {items.map((item) => <article key={item.id} className="rounded-xl border border-border p-5">
+  {loading && <p role="status" className="text-muted">Loading your sessions…</p>}
+  {!loading && !loadFailed && !items.length && <p className="text-muted">You have no assigned sessions at the moment.</p>}
+  {loadFailed && <p className="text-sm text-muted">Your sessions could not be loaded. Please try again later or contact the team.</p>}
+  {!loadFailed && items.map((item) => <article key={item.id} className="rounded-xl border border-border p-5">
    <h2 className="font-bold">{item.sessionId}</h2>
    <p className="mt-1 text-sm">{item.date} · {item.start}–{item.end} (London time)</p>
    <p className="mt-1 text-sm">Status: <strong>{item.status}</strong></p>
