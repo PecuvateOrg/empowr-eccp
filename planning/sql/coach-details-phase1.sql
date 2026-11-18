@@ -28,3 +28,33 @@ create table if not exists eccp.coach_availability_exceptions (
         (available = true and start_time is not null and end_time is not null and start_time < end_time))
 );
 -- Migration does not grant access to anon/authenticated roles.
+
+-- Atomic replacement: exposed only to service_role; caller's coach identity
+-- is checked by the authenticated Next.js route, never accepted from the browser.
+create or replace function eccp.replace_coach_availability(
+ p_coach_id uuid, p_weekly jsonb, p_exceptions jsonb
+) returns void language plpgsql security definer set search_path = eccp, pg_temp as $$
+begin
+ if jsonb_typeof(p_weekly) is distinct from 'array' or
+    jsonb_typeof(p_exceptions) is distinct from 'array' or
+    jsonb_array_length(p_weekly) > 70 or jsonb_array_length(p_exceptions) > 366 then
+   raise exception 'Invalid availability payload';
+ end if;
+ if not exists (select 1 from eccp.coaches where id = p_coach_id) then
+   raise exception 'Coach not found';
+ end if;
+ delete from eccp.coach_weekly_availability where coach_id = p_coach_id;
+ insert into eccp.coach_weekly_availability(coach_id,weekday,start_time,end_time)
+ select p_coach_id, (item->>'weekday')::smallint,
+        (item->>'start')::time, (item->>'end')::time
+ from jsonb_array_elements(p_weekly) item;
+ delete from eccp.coach_availability_exceptions where coach_id = p_coach_id;
+ insert into eccp.coach_availability_exceptions(coach_id,exception_date,available,start_time,end_time)
+ select p_coach_id, (item->>'date')::date, (item->>'available')::boolean,
+        case when (item->>'available')::boolean then (item->>'start')::time else null end,
+        case when (item->>'available')::boolean then (item->>'end')::time else null end
+ from jsonb_array_elements(p_exceptions) item;
+end;
+$$;
+revoke all on function eccp.replace_coach_availability(uuid,jsonb,jsonb) from public, anon, authenticated;
+grant execute on function eccp.replace_coach_availability(uuid,jsonb,jsonb) to service_role;
