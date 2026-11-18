@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getCurrentCoach } from "@/lib/auth";
-import { getDb } from "@/lib/supabase";
 import { listStaffAssignments } from "@/lib/coach-assignment-storage";
 export async function GET() {
  const coach = await getCurrentCoach();
@@ -27,6 +26,10 @@ export async function POST(request: Request) {
  // The RPC checks the instant matches the London local session date/time.
  if (typeof value.startAtUtc !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(value.startAtUtc) ||
   !Number.isFinite(Date.parse(value.startAtUtc))) return NextResponse.json({ error: "Valid UTC session start required" }, { status: 400 });
+ // Do not permit live offers until authoritative session, activation, grade and compliance
+ // evidence can be checked server-side and rechecked atomically by the assignment RPC.
+ return NextResponse.json({ error: "Assignment offers are paused pending verified session and coach eligibility integration", code: "ELIGIBILITY_NOT_CONFIGURED" }, { status: 503 });
+ /* Pending Shaun-approved staging integration:
  const { data, error } = await getDb().rpc("staff_offer_coach_assignment", {
   p_coach_id: value.coachId, p_session_id: value.sessionId.trim(),
   p_session_date: value.date, p_start_time: value.start, p_end_time: value.end,
@@ -34,4 +37,5 @@ export async function POST(request: Request) {
  });
  if (error) return NextResponse.json({ error: "Assignment could not be offered; staging integration may be pending" }, { status: 409 });
  return NextResponse.json({ assignment: data }, { status: 201 });
+ */
 }
