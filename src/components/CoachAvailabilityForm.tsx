@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   validateAvailability,
   type CoachAvailability,
@@ -14,17 +14,33 @@ export function CoachAvailabilityForm() {
   const [exceptions, setExceptions] = useState<CoachAvailability["exceptions"]>([]);
   const [message, setMessage] = useState("");
 
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    fetch("/api/coach/availability", { cache: "no-store" })
+      .then(async (response) => { if (!response.ok) throw new Error("Unavailable"); return response.json(); })
+      .then(({ availability }) => { setWeekly(availability.weekly); setExceptions(availability.exceptions); })
+      .catch(() => setMessage("Availability storage is not enabled yet. Changes cannot be saved."));
+  }, []);
+
   function addWindow(day: Weekday) {
     setWeekly((current) => [...current, { weekday: day, start: "09:00", end: "17:00" }]);
     setMessage("");
   }
 
-  function validate(event: FormEvent<HTMLFormElement>) {
+  async function validate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const errors = validateAvailability({ weekly, exceptions });
-    setMessage(errors.length
-      ? errors.join(". ")
-      : "Availability validated. Nothing has been saved; database integration is pending.");
+    if (errors.length) { setMessage(errors.join(". ")); return; }
+    setBusy(true);
+    try {
+      const response = await fetch("/api/coach/availability", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekly, exceptions }),
+      });
+      if (!response.ok) throw new Error("Save failed");
+      setMessage("Your availability has been saved.");
+    } catch { setMessage("Unable to save availability. No successful save was confirmed."); }
+    finally { setBusy(false); }
   }
 
   return (
@@ -85,11 +101,11 @@ export function CoachAvailabilityForm() {
             date: "", available: false, start: "09:00", end: "17:00",
           }])}>Add date exception</button>
       </section>
-      <button type="submit" className="rounded-lg bg-blue px-5 py-3 font-bold text-white">
-        Validate availability
+      <button type="submit" disabled={busy} className="rounded-lg bg-blue px-5 py-3 font-bold text-white disabled:opacity-50">
+        {busy ? "Saving..." : "Save availability"}
       </button>
       {message && <p role="status" className="text-sm">{message}</p>}
-      <p className="text-sm text-muted">Preview only: changes are not saved or shared with admins yet.</p>
+      <p className="text-sm text-muted">Saving requires the approved Supabase migration. Assigned-session conflict notifications are not enabled yet.</p>
     </form>
   );
 }
