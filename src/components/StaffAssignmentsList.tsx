@@ -1,12 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { AssignmentView } from "@/lib/coach-assignment-storage";
+import { londonSessionStartUtc } from "@/lib/london-session-time";
 export function StaffAssignmentsList() {
  const [items, setItems] = useState<AssignmentView[]>([]);
  const [error, setError] = useState("");
  const [loading, setLoading] = useState(true);
  const [loadFailed, setLoadFailed] = useState(false);
- const [form, setForm] = useState({ coachId: "", sessionId: "", date: "", start: "", end: "", startAtUtc: "" });
+ const [form, setForm] = useState({ coachId: "", sessionId: "", date: "", start: "", end: "" });
+ const [coaches, setCoaches] = useState<{id:string;full_name:string;email:string}[]>([]);
+ const [directoryError, setDirectoryError] = useState(false);
+ const startAtUtc = londonSessionStartUtc(form.date, form.start);
  const [saving, setSaving] = useState(false);
  const [statusFilter, setStatusFilter] = useState("all");
  const visible = items.filter((item) => statusFilter === "all" || item.status === statusFilter);
@@ -31,9 +35,11 @@ export function StaffAssignmentsList() {
   } catch { setError("Conflict preview is not available until staging database setup."); }
  }
  async function offer(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault(); setSaving(true); setError("");
+  event.preventDefault();
+  if (!startAtUtc) { setError("Select a valid London session date and time. Daylight-saving transition hours may be ambiguous."); return; }
+  setSaving(true); setError("");
   try {
-   const response = await fetch("/api/management/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+   const response = await fetch("/api/management/assignments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, startAtUtc }) });
    if (!response.ok) throw new Error("Offer could not be saved");
    const listing = await fetch("/api/management/assignments", { cache: "no-store" });
    if (listing.ok) setItems((await listing.json()).assignments);
@@ -42,6 +48,10 @@ export function StaffAssignmentsList() {
   finally { setSaving(false); }
  }
  useEffect(() => {
+  fetch("/api/management/assignments/coaches", { cache: "no-store" })
+   .then(async (response) => { if (!response.ok) throw new Error("Unavailable"); return response.json(); })
+   .then((data) => setCoaches(data.coaches))
+   .catch(() => setDirectoryError(true));
   fetch("/api/management/assignments", { cache: "no-store" })
    .then(async (r) => { if (!r.ok) throw new Error("Unavailable"); return r.json(); })
    .then((data) => { setItems(data.assignments); setLoadFailed(false); })
@@ -51,13 +61,21 @@ export function StaffAssignmentsList() {
  return <section className="mt-8 space-y-3">
   <form onSubmit={offer} className="space-y-3 rounded-xl border border-border p-5">
    <h2 className="font-bold">Offer a coach a session</h2>
-   <p className="text-sm text-muted">Staging integration required. Confirm the coach ID and the UTC instant corresponding to the London session start.</p>
-   {([["coachId","Coach UUID"],["sessionId","Session reference"],["date","Session date (YYYY-MM-DD)"],["start","Start (HH:mm London)"],["end","End (HH:mm London)"],["startAtUtc","UTC start (e.g. 2026-11-23T10:00:00Z)"]] as const).map(([key,label]) =>
+   <p className="text-sm text-muted">Select a coach and enter the session details in London local time. Staging integration is required before offers can be saved.</p>
+   <label className="block text-sm">Coach
+    <select required value={form.coachId} onChange={(event) => setForm((current) => ({ ...current, coachId: event.target.value }))} className="mt-1 block w-full rounded border border-border bg-transparent p-2">
+     <option value="">Select a coach</option>
+     {coaches.map((coach) => <option key={coach.id} value={coach.id}>{coach.full_name} ({coach.email})</option>)}
+    </select>
+   </label>
+   {directoryError && <p role="status" className="text-sm text-muted">Coach directory is currently unavailable.</p>}
+   {([["sessionId","Session reference","text"],["date","Session date","date"],["start","Start time (London)","time"],["end","End time (London)","time"]] as const).map(([key,label,type]) =>
     <label key={key} className="block text-sm">{label}
-     <input required value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+     <input required type={type} value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
       className="mt-1 block w-full rounded border border-border bg-transparent p-2" />
     </label>)}
-   <button disabled={saving} type="submit" className="rounded bg-blue px-4 py-2 text-white disabled:opacity-50">{saving ? "Saving..." : "Offer session"}</button>
+   {form.date && form.start && !startAtUtc && <p className="text-sm text-muted">This date or time is invalid or ambiguous due to daylight saving. Please choose another time.</p>}
+   <button disabled={saving || !coaches.length || !startAtUtc} type="submit" className="rounded bg-blue px-4 py-2 text-white disabled:opacity-50">{saving ? "Saving..." : "Offer session"}</button>
   </form>
   <div className="rounded-xl border border-border p-4">
    <h2 className="font-bold">Administrator alert queue</h2>
