@@ -9,7 +9,7 @@ export function CoachSessionsList() {
  const [loadFailed, setLoadFailed] = useState(false);
  const [busy, setBusy] = useState<string | null>(null);
  const [filter, setFilter] = useState<"upcoming" | "all" | "action">("upcoming");
- const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+ const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
  const visible = items.filter((item) => filter === "all" || (filter === "action" ? item.status === "offered" : item.date >= today && !["cancelled", "declined", "withdrawn", "completed"].includes(item.status)));
  const pending = items.filter((item) => item.status === "offered").length;
  const [reasons, setReasons] = useState<Record<string,string>>({});
