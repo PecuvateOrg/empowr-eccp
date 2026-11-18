@@ -4,6 +4,8 @@ import type { AssignmentView } from "@/lib/coach-assignment-storage";
 export function StaffAssignmentsList() {
  const [items, setItems] = useState<AssignmentView[]>([]);
  const [error, setError] = useState("");
+ const [loading, setLoading] = useState(true);
+ const [loadFailed, setLoadFailed] = useState(false);
  const [form, setForm] = useState({ coachId: "", sessionId: "", date: "", start: "", end: "", startAtUtc: "" });
  const [saving, setSaving] = useState(false);
  const [alerts, setAlerts] = useState<{id:string;assignment_id:string;alert_type:string;status:string;created_at:string}[]>([]);
@@ -38,8 +40,9 @@ export function StaffAssignmentsList() {
  useEffect(() => {
   fetch("/api/management/assignments", { cache: "no-store" })
    .then(async (r) => { if (!r.ok) throw new Error("Unavailable"); return r.json(); })
-   .then((data) => setItems(data.assignments))
-   .catch(() => setError("Scheduling storage is not ready yet."));
+   .then((data) => { setItems(data.assignments); setLoadFailed(false); })
+   .catch(() => { setLoadFailed(true); setError("Scheduling storage is not ready yet."); })
+   .finally(() => setLoading(false));
  }, []);
  return <section className="mt-8 space-y-3">
   <form onSubmit={offer} className="space-y-3 rounded-xl border border-border p-5">
@@ -65,13 +68,14 @@ export function StaffAssignmentsList() {
    {conflicts.map((c) => <p key={c.assignmentId} className="mt-2 text-sm">Conflict: {c.sessionId} on {c.date} (assignment {c.assignmentId})</p>)}
   </div>
   {error && <p role="status">{error}</p>}
-  {!items.length && <p className="text-muted">No assignments available.</p>}
-  {items.map((item) => <article key={item.id} className="rounded-xl border border-border p-4">
+  {loading && <p role="status" className="text-muted">Loading assignments…</p>}
+  {!loading && !loadFailed && !items.length && <p className="text-muted">No assignments available.</p>}
+  {!loadFailed && items.map((item) => <article key={item.id} className="rounded-xl border border-border p-4">
    <h2 className="font-bold">{item.sessionId}</h2>
    <p className="text-sm">{item.date} · {item.start}–{item.end} · Coach ID: {item.coachId}</p>
    <p className="text-sm">Status: {item.status}</p>
    {item.reason && <p className="text-sm">Reason: {item.reason}</p>}
   </article>)}
-  <p className="text-sm text-muted">Read-only management view. Assignment creation and notifications are pending staging integration.</p>
+  <p className="text-sm text-muted">Assignment offers require staging integration. Alerts can be queued after the migrations are applied, but notification delivery is not enabled.</p>
  </section>;
 }
