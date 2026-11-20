@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentCoach } from "@/lib/auth";
 import { CoachProfileForm } from "@/components/CoachProfileForm";
+import { CoachAvailabilityForm } from "@/components/CoachAvailabilityForm";
 
 export default async function CoachProfilePage() {
   const coach = await getCurrentCoach();
@@ -35,6 +36,11 @@ export default async function CoachProfilePage() {
       </section>
 
       <CoachProfileForm />
+      <section id="availability" className="mt-8 scroll-mt-6 rounded-xl border border-border p-6">
+        <h2 className="text-lg font-bold">My availability</h2>
+        <p className="mt-2 text-sm text-muted">Manage your usual coaching days and times and any exceptions.</p>
+        <CoachAvailabilityForm />
+      </section>
     </main>
   );
 }
