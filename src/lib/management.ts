@@ -2,12 +2,14 @@ import { getDb } from "./supabase";
 import { sendWelcomeEmail } from "./email";
 import { can, type Coach } from "./auth";
 import type { AdminRole } from "./coach-permissions";
+import type { CoachingGrade } from "./coaching-grade";
 
 export interface CoachOverview {
   readonly id: string;
   readonly email: string;
   readonly fullName: string;
   readonly role: AdminRole;
+  readonly coachingGrade: CoachingGrade | null;
   readonly latestAttempt: {
     readonly score: number;
     readonly passed: boolean;
@@ -38,7 +40,7 @@ export async function getManagementOverview(requestedBy: Coach): Promise<CoachOv
 
   const { data: coaches, error: coachError } = await db
     .from("coaches")
-    .select("id, email, full_name, admin_role")
+    .select("id, email, full_name, admin_role, coaching_grade")
     .order("full_name", { ascending: true });
   if (coachError) throw new Error(`coach list failed: ${coachError.message}`);
   if (!coaches || coaches.length === 0) return [];
@@ -81,6 +83,7 @@ export async function getManagementOverview(requestedBy: Coach): Promise<CoachOv
       email: coach.email,
       fullName: coach.full_name,
       role: coach.admin_role,
+      coachingGrade: coach.coaching_grade ?? null,
       latestAttempt: attempt
         ? { score: attempt.score, passed: attempt.passed, submittedAt: attempt.submitted_at }
         : null,
