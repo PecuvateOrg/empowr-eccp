@@ -5,12 +5,11 @@
 ## Database review and migration order
 1. Confirm `eccp.coaches` identity mapping and the actual authoritative session registry. The proposed `external_session_id` is temporary; avoid duplicate session sources.
 2. Review existing `eccp` privileges, SECURITY DEFINER ownership and service_role-only RPC grants.
-3. Review and apply to **staging only**, in order:
+3. Review and apply in the order in `planning/sql/README.md` (there is no staging database; files are additive and features stay off until checked):
    - `planning/sql/coach-details-phase1.sql`
    - `planning/sql/coach-scheduling-phase1.sql`
    - `planning/sql/coach-assignment-decisions-phase1.sql`
    - `planning/sql/coach-assignment-offers-phase1.sql`
-   - `planning/sql/coach-availability-conflict-alerts-phase1.sql` (overrides the earlier availability RPC)
 4. Confirm staging environment variables and application API point to staging Supabase only.
 
 ## Test scenarios
