@@ -17,10 +17,9 @@ export default async function CoachDashboardPage() {
  const trainingAction = passed ? "View certificate" : completed ? "Continue training" : "Start training";
  const cards = [
   { title: "My sessions & shifts", description: "Your assigned coaching sessions and shift details will appear here once scheduling is connected.", href: null, action: "Coming soon" },
-  { title: "My availability", description: "Let the team know when you are available for coaching.", href: "/availability", action: "Update availability" },
   { title: "Team messages", description: "Contact the staff team and chat with invited coaches in your session groups once messaging is enabled.", href: null, action: "Coming soon" },
   { title: "My development", description: "Access additional training and track your coaching progression as new courses become available.", href: "/course", action: "Explore training" },
-  { title: "My coach profile", description: "Review your account details and emergency contact information.", href: "/profile", action: "View profile" },
+  { title: "My coach profile", description: "Review your account details, emergency contacts and coaching availability.", href: "/profile", action: "View profile" },
  ] as const;
  return <main className="py-10">
   <p className="text-xs font-black uppercase tracking-widest text-red-dark">Empowr Certified Coaching Programme</p>
