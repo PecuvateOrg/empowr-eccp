@@ -45,7 +45,7 @@ export function LoginForm() {
     const data = await response.json().catch(() => ({}));
 
     if (response.ok) {
-      router.push(data.redirectTo ?? "/course");
+      router.push(data.redirectTo ?? "/dashboard");
     } else {
       setBusy(false);
       setError(data.error ?? "Invalid or expired code.");
