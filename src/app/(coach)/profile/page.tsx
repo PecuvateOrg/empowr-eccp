@@ -9,7 +9,7 @@ export default async function CoachProfilePage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl py-10">
-      <Link href="/course" className="text-sm font-semibold text-blue hover:underline">
+      <Link href="/dashboard" className="text-sm font-semibold text-blue hover:underline">
         Back to coach portal
       </Link>
       <h1 className="mt-6 text-3xl font-bold">My coach profile</h1>
@@ -30,7 +30,7 @@ export default async function CoachProfilePage() {
           </div>
         </dl>
         <p className="mt-4 text-sm text-muted">
-          Changes to your name, email, coaching grade and compliance status are managed by the Empowr team.
+          Your account email is linked to the account you signed in with. To use a separate coach email, sign out and use that coach account. Admin changes must be verified against the correct account before updating any email.
         </p>
       </section>
 
