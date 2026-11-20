@@ -18,13 +18,15 @@ export default async function CoachLayout({
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-5 py-8 sm:px-8">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
-        <BrandMark href="/course" label="ECCP" />
+        <BrandMark href="/dashboard" label="ECCP" />
         <div className="flex items-center gap-4 text-sm">
           {coach.is_staff ? (
             <Link className="font-bold text-blue hover:text-blue-dark" href="/management">
               Management
             </Link>
           ) : null}
+          <Link className="font-semibold text-blue hover:text-blue-dark" href="/dashboard">Home</Link>
+          <Link className="font-semibold text-blue hover:text-blue-dark" href="/course">Safeguarding</Link>
           <Link className="font-semibold text-blue hover:text-blue-dark" href="/profile">My Profile</Link>
           <Link className="font-semibold text-blue hover:text-blue-dark" href="/availability">Availability</Link>
           <span className="text-muted">{coach.full_name}</span>
