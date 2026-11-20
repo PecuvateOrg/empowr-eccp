@@ -8,7 +8,7 @@ Empowr ECCP is the planned web platform for the Empowr Certified Coaching Progra
 |---|---|
 | `planning/` | Product scope, architecture, and decision records |
 | `src/` | Self-contained Next.js application; run all pnpm commands here |
-| `ops/` | Netlify deployment, environment variables, and operational setup |
+| `ops/` | AWS Amplify deployment, environment variables, schedules and operational setup |
 
 ## Audience
 
@@ -22,7 +22,7 @@ Programme identity and terminology come from `~/projects/vaults/EMPOWR CIC\entit
 
 ## External Services
 
-- Netlify — intended deployment platform; site and domain are not yet assigned
+- AWS Amplify (eu-west-2) — hosting since 2026-11-18, `amplify.yml` at the repo root; secrets in SSM. Netlify (`netlify.toml`, `src/netlify/`) kept only as a fallback until retired
 - Authentication, data storage, payments, email, and learning-content services — not yet selected
 
 ## Known Decisions and Constraints
@@ -30,4 +30,4 @@ Programme identity and terminology come from `~/projects/vaults/EMPOWR CIC\entit
 - The repository is public under `PecuvateOrg` so `EmpowrCIC` can contribute through a fork and pull request.
 - Private operational state lives in the parent workspace, not this repository.
 - Do not assume ECCP can reuse the shared `empowr-cic` Supabase Auth setup: that Auth namespace is already owned by Empowr Members and requires an explicit architecture decision.
-- The project uses Next.js App Router, TypeScript strict mode, Tailwind CSS 4, pnpm 11.22.0, and Netlify.
+- The project uses Next.js App Router, TypeScript strict mode, Tailwind CSS 4, pnpm 11.22.0, and AWS Amplify.
