@@ -33,19 +33,11 @@ create table if not exists eccp.coach_availability_exceptions (
 -- Replaces the coach's availability atomically. Exposed only to service_role; the
 -- caller's coach identity is checked by the authenticated Next.js route, never
 -- accepted from the browser. The coach row is locked so concurrent edits serialise.
--- Conflict alerts for offered/accepted future assignments run ONLY when
--- eccp.coach_session_assignments exists (coach-scheduling-phase1.sql, held pending
--- the EFN handoff decision). Until then the function just saves availability.
--- Queuing an alert is not delivery: a separately reviewed worker must deliver them.
+-- Session assignments live in EFN (owner decision 2026-11-20), so there are no
+-- ECCP-side assignment conflicts to check here.
 create or replace function eccp.replace_coach_availability(
  p_coach_id uuid, p_weekly jsonb, p_exceptions jsonb
 ) returns void language plpgsql security definer set search_path = eccp, pg_temp as $$
-declare
- a record;
- old_conflicts uuid[] := '{}';
- new_conflict boolean;
- old_conflict boolean;
- has_assignments boolean;
 begin
  if jsonb_typeof(p_weekly) is distinct from 'array' or
     jsonb_typeof(p_exceptions) is distinct from 'array' or
@@ -54,62 +46,17 @@ begin
  end if;
  perform 1 from eccp.coaches where id = p_coach_id for update;
  if not found then raise exception 'Coach not found'; end if;
- has_assignments := to_regclass('eccp.coach_session_assignments') is not null;
- -- Capture existing conflicts before replacing availability.
- if has_assignments then
- for a in select * from eccp.coach_session_assignments
-   where coach_id = p_coach_id and status in ('offered','accepted')
-     and session_start_at >= now() for update
- loop
-   select not (
-     case when exists(select 1 from eccp.coach_availability_exceptions e
-       where e.coach_id=p_coach_id and e.exception_date=a.session_date)
-     then exists(select 1 from eccp.coach_availability_exceptions e
-       where e.coach_id=p_coach_id and e.exception_date=a.session_date and e.available
-       and e.start_time <= a.start_time and e.end_time >= a.end_time)
-     else exists(select 1 from eccp.coach_weekly_availability w
-       where w.coach_id=p_coach_id
-       and w.weekday=((extract(isodow from a.session_date)::int - 1))
-       and w.start_time <= a.start_time and w.end_time >= a.end_time)
-     end
-   ) into old_conflict;
-   if old_conflict then old_conflicts := array_append(old_conflicts,a.id); end if;
- end loop;
- end if;
- delete from eccp.coach_weekly_availability where coach_id=p_coach_id;
+ delete from eccp.coach_weekly_availability where coach_id = p_coach_id;
  insert into eccp.coach_weekly_availability(coach_id,weekday,start_time,end_time)
  select p_coach_id,(item->>'weekday')::smallint,(item->>'start')::time,(item->>'end')::time
  from jsonb_array_elements(p_weekly) item;
- delete from eccp.coach_availability_exceptions where coach_id=p_coach_id;
+ delete from eccp.coach_availability_exceptions where coach_id = p_coach_id;
  insert into eccp.coach_availability_exceptions(coach_id,exception_date,available,start_time,end_time)
  select p_coach_id,(item->>'date')::date,(item->>'available')::boolean,
   case when (item->>'available')::boolean then (item->>'start')::time else null end,
   case when (item->>'available')::boolean then (item->>'end')::time else null end
  from jsonb_array_elements(p_exceptions) item;
- if has_assignments then
- for a in select * from eccp.coach_session_assignments
-   where coach_id=p_coach_id and status in ('offered','accepted')
-     and session_start_at >= now()
- loop
-   select not (
-     case when exists(select 1 from eccp.coach_availability_exceptions e
-       where e.coach_id=p_coach_id and e.exception_date=a.session_date)
-     then exists(select 1 from eccp.coach_availability_exceptions e
-       where e.coach_id=p_coach_id and e.exception_date=a.session_date and e.available
-       and e.start_time <= a.start_time and e.end_time >= a.end_time)
-     else exists(select 1 from eccp.coach_weekly_availability w
-       where w.coach_id=p_coach_id
-       and w.weekday=(extract(isodow from a.session_date)::int - 1)
-       and w.start_time <= a.start_time and w.end_time >= a.end_time)
-     end
-   ) into new_conflict;
-   if new_conflict and not (a.id = any(old_conflicts)) then
-     insert into eccp.coach_assignment_alert_outbox(assignment_id,coach_id,alert_type)
-     values (a.id,p_coach_id,'availability_conflict');
-   end if;
- end loop;
- end if;
 end;
 $$;
-revoke all on function eccp.replace_coach_availability(uuid,jsonb,jsonb) from public,anon,authenticated;
+revoke all on function eccp.replace_coach_availability(uuid,jsonb,jsonb) from public, anon, authenticated;
 grant execute on function eccp.replace_coach_availability(uuid,jsonb,jsonb) to service_role;

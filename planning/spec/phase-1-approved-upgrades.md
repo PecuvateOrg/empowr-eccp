@@ -9,6 +9,12 @@ Status: approved operational requirements; **not implemented by this document**.
 - Grades: Head Coach, Assistant Coach, Junior Assistant Coach. Coach can edit own contact/emergency details and availability; cannot self-verify compliance/grade.
 - Onboarding: Invited → In Progress → Ready for Activation → Active; support Withdrawn. Safeguarding course, DBS verification/recheck, EFN freelancer agreement, first aid for Head Coaches. Do not duplicate EFN agreements or retain unnecessary sensitive documents. All privilege checks server-side.
 
+> **Owner decision 2026-11-20 — where sections 2–4 live.** Session assignments, cover,
+> attendance and hours are **EFN** work: each session is an EFN task (`freelancer_tasks`),
+> the engine for hours, approval and payment. ECCP shows a coach their tasks through EFN's
+> `/api/eccp/v1` and keeps **availability** (and contact profile) itself. The rules below
+> still stand as requirements; they are built in EFN, not as ECCP tables.
+
 ## 2. Availability, assignment and cover (P0)
 - Recurring weekly availability and date exceptions. Notify admins of availability changes only if they conflict with assigned sessions.
 - Assigned session displays date, venue, time and grade/role; coach can accept/decline. Accepted-session withdrawal requires reason; under 24h triggers urgent admin alert.
@@ -23,7 +29,7 @@ Status: approved operational requirements; **not implemented by this document**.
 - At 24 hours without confirmation, mark Unresolved, show on both Admin and Super Admin dashboards (no standalone alert). Eve/Jasmine/Shaun may resolve Attended (scheduled hours) or Absent (zero), with reason and audit. Exclude unresolved from payment batches.
 
 ## 4. Hours and corrections (P0)
-- ECCP is source of assignments, attendance and operational hours; EFN is source of freelancer agreements and payments.
+- EFN is the source of assignments, attendance, hours, freelancer agreements and payments (owner 2026-11-20). ECCP is the source of coach availability, profile, certification and compliance.
 - Auto-record scheduled hours only after confirmed attendance. Coach may request **reduction**, not increase, with mandatory reason and admin approval. Coach correction window: 7 calendar days after session or until authorized payment lock, whichever is earlier; admins handle later exceptions.
 - Coaches see own sessions, roles, hours and statuses Pending Review / Approved / Sent for Payment, without payment amounts.
 
