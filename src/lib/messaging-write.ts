@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { getCurrentCoach } from "@/lib/auth";
 import { getDb } from "@/lib/supabase";
 import { NextResponse } from "next/server";
@@ -10,7 +11,9 @@ export async function actorForWrite() {
  const actor = await getCurrentCoach();
  if (!actor) return { error: fail("Authentication required", 401) };
  if (messagingDisabled()) return { error: fail("Messaging is not enabled", 503) };
- return { actor };
+ const token = (await cookies()).get("eccp_session")?.value;
+ if (!token) return { error: fail("Authentication required", 401) };
+ return { actor, token };
 }
 export async function ordinaryConversation(id: string) {
  const { data, error } = await getDb().from("message_conversations").select("id,kind,created_by,assigned_staff_id").eq("id", id).neq("kind", "safeguarding").maybeSingle();
