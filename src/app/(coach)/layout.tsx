@@ -25,13 +25,14 @@ export default async function CoachLayout({
               Management
             </Link>
           ) : null}
-          <Link className="font-semibold text-blue hover:text-blue-dark" href="/dashboard">Home</Link>
-          <Link className="font-semibold text-blue hover:text-blue-dark" href="/training">My Training</Link>
-          <Link className="font-semibold text-blue hover:text-blue-dark" href="/profile">My Profile</Link>
           <span className="text-muted">{coach.full_name}</span>
           <SignOutButton />
         </div>
       </header>
+      <div role="status" className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted">
+        <span aria-hidden="true">🔔</span>
+        <span>Team message alerts will appear here when messaging is connected.</span>
+      </div>
       {children}
     </div>
   );
