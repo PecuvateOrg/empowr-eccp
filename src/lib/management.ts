@@ -1,12 +1,13 @@
 import { getDb } from "./supabase";
 import { sendWelcomeEmail } from "./email";
-import type { Coach } from "./auth";
+import { can, type Coach } from "./auth";
+import type { AdminRole } from "./coach-permissions";
 
 export interface CoachOverview {
   readonly id: string;
   readonly email: string;
   readonly fullName: string;
-  readonly isStaff: boolean;
+  readonly role: AdminRole;
   readonly latestAttempt: {
     readonly score: number;
     readonly passed: boolean;
@@ -24,20 +25,20 @@ export interface CoachOverview {
 // typed loosely off explicit column selects, not fought into a generic. Fine
 // at this scale (a coach roster, not a high-volume table); merged in JS below.
 //
-// Takes the requesting coach and re-checks is_staff itself rather than
+// Takes the requesting coach and re-checks the role itself rather than
 // trusting the caller — (staff)/layout.tsx is the only gate today, but a
 // second gate here means this function stays safe to call from anywhere
 // later without silently becoming the access-control gap.
 export async function getManagementOverview(requestedBy: Coach): Promise<CoachOverview[]> {
-  if (!requestedBy.is_staff) {
-    throw new Error("not authorised: requestedBy is not staff");
+  if (!can(requestedBy, "view_management")) {
+    throw new Error("not authorised: requestedBy cannot view management");
   }
 
   const db = getDb();
 
   const { data: coaches, error: coachError } = await db
     .from("coaches")
-    .select("id, email, full_name, is_staff")
+    .select("id, email, full_name, admin_role")
     .order("full_name", { ascending: true });
   if (coachError) throw new Error(`coach list failed: ${coachError.message}`);
   if (!coaches || coaches.length === 0) return [];
@@ -79,7 +80,7 @@ export async function getManagementOverview(requestedBy: Coach): Promise<CoachOv
       id: coach.id,
       email: coach.email,
       fullName: coach.full_name,
-      isStaff: coach.is_staff,
+      role: coach.admin_role,
       latestAttempt: attempt
         ? { score: attempt.score, passed: attempt.passed, submittedAt: attempt.submitted_at }
         : null,
@@ -110,14 +111,14 @@ export type ProvisionCoachResult =
 
 // Staff-provisioned accounts only — there is no public self-signup, per the
 // original plan's read of the handover material (the mock-up only shows a
-// login form, never a signup form). Re-checks is_staff itself, same reason
+// login form, never a signup form). Re-checks the role itself, same reason
 // as getManagementOverview above.
 export async function provisionCoach(
   requestedBy: Coach,
   input: { email: string; fullName: string },
 ): Promise<ProvisionCoachResult> {
-  if (!requestedBy.is_staff) {
-    throw new Error("not authorised: requestedBy is not staff");
+  if (!can(requestedBy, "invite_coach")) {
+    throw new Error("not authorised: requestedBy cannot invite coaches");
   }
 
   const email = input.email.trim().toLowerCase();
@@ -132,7 +133,7 @@ export async function provisionCoach(
 
   const { data, error } = await getDb()
     .from("coaches")
-    .insert({ email, full_name: fullName, is_staff: false })
+    .insert({ email, full_name: fullName, is_staff: false, admin_role: "coach" })
     .select("id, email, full_name")
     .single();
 

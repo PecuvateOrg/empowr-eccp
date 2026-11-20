@@ -1,4 +1,4 @@
-import { getCurrentCoach } from "@/lib/auth";
+import { can, getCurrentCoach } from "@/lib/auth";
 import { renderCertificateHtml } from "@/lib/certificate-template";
 import { renderCertificatePdf } from "@/lib/issue-certificate";
 import { computeCertificateDates } from "@/lib/london-date";
@@ -11,7 +11,7 @@ import { PASS_MARK } from "@/lib/safeguarding-course";
 export async function GET() {
   const coach = await getCurrentCoach();
   if (!coach) return new Response("Not signed in", { status: 401 });
-  if (!coach.is_staff) return new Response("Not authorised", { status: 403 });
+  if (!can(coach, "view_management")) return new Response("Not authorised", { status: 403 });
 
   const dates = computeCertificateDates();
   const html = renderCertificateHtml({

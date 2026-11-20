@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { verifyOtp } from "@/lib/auth";
+import { can, verifyOtp } from "@/lib/auth";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -29,6 +29,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     success: true,
-    redirectTo: result.coach.is_staff ? "/management" : "/course",
+    redirectTo: can(result.coach, "view_management") ? "/management" : "/course",
   });
 }
