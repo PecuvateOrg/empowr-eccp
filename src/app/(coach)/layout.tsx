@@ -26,7 +26,7 @@ export default async function CoachLayout({
             </Link>
           ) : null}
           <Link className="font-semibold text-blue hover:text-blue-dark" href="/dashboard">Home</Link>
-          <Link className="font-semibold text-blue hover:text-blue-dark" href="/course">Safeguarding</Link>
+          <Link className="font-semibold text-blue hover:text-blue-dark" href="/training">My Training</Link>
           <Link className="font-semibold text-blue hover:text-blue-dark" href="/profile">My Profile</Link>
           <span className="text-muted">{coach.full_name}</span>
           <SignOutButton />
