@@ -31,13 +31,13 @@ export default async function CoachDashboardPage() {
     <span className="mt-4 inline-flex rounded-full bg-warm-white px-4 py-2 text-sm font-bold text-muted">Coming soon</span>
    </section>
    <section className="rounded-2xl border border-border bg-card p-6">
-    <h2 className="text-lg font-bold text-ink">My Training</h2>
+    <h2 className="text-lg font-bold text-ink">My Training &amp; Compliance</h2>
     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
      <span className="font-semibold text-ink">Safeguarding</span>
      <span className="rounded-full bg-blue-pale px-3 py-1 text-sm font-bold text-blue-dark">{status}</span>
     </div>
-    <p className="mt-2 text-sm text-muted">{completed} of {total} modules complete. View courses and certificates.</p>
-    <Link className="mt-4 inline-flex rounded-full border border-blue px-4 py-2 text-sm font-bold text-blue-dark hover:bg-blue-pale" href="/training">Open My Training</Link>
+    <p className="mt-2 text-sm text-muted">{completed} of {total} modules complete. View courses, certificates and compliance requirements.</p>
+    <Link className="mt-4 inline-flex rounded-full border border-blue px-4 py-2 text-sm font-bold text-blue-dark hover:bg-blue-pale" href="/training">Open Training &amp; Compliance</Link>
    </section>
    <section className="rounded-2xl border border-border bg-card p-6">
     <h2 className="text-lg font-bold text-ink">My Profile</h2>
