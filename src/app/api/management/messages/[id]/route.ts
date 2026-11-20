@@ -23,7 +23,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
  if ("status" in input && !statuses.includes(input.status as string)) return fail("Invalid status", 400);
  // RPC must check persisted staff role of actor and assignee and write an audit event atomically.
  const { error } = await getDb().rpc("message_manage_staff_enquiry", {
-   p_actor_id: auth.actor!.id, p_conversation_id: id,
+   p_session_token: auth.token!, p_conversation_id: id,
    p_has_assignee: "assigneeId" in input, p_assignee_id: input.assigneeId ?? null,
    p_priority: input.priority ?? null, p_status: input.status ?? null,
  });
