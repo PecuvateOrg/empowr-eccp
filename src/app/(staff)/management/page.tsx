@@ -38,6 +38,7 @@ export default async function ManagementPage() {
         — renders a sample; nothing is saved, emailed or numbered.
       </p>
 
+      <p className="mt-4 text-sm"><a href="/management/onboarding-preview" className="font-bold text-blue underline">View mock coach onboarding tracker</a> — sample data only.</p>
       <ProvisionCoachForm />
 
       <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-card">

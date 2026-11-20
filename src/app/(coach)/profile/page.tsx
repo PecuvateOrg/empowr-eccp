@@ -36,6 +36,11 @@ export default async function CoachProfilePage() {
         </p>
       </section>
 
+      <section className="mt-6 rounded-xl border border-border p-5">
+        <h2 className="font-bold">Coach onboarding preview</h2>
+        <p className="mt-2 text-sm text-muted">Explore a sample onboarding checklist. This is not your actual compliance status.</p>
+        <Link href="/onboarding-preview" className="mt-3 inline-block font-semibold text-blue underline">View example onboarding progress</Link>
+      </section>
       <InstallECCPApp />
       <CoachProfileForm />
       <section id="availability" className="mt-8 scroll-mt-6 rounded-xl border border-border p-6">
