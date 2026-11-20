@@ -29,6 +29,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     success: true,
-    redirectTo: can(result.coach, "view_management") ? "/management" : "/course",
+    redirectTo: can(result.coach, "view_management") ? "/management" : "/dashboard",
   });
 }

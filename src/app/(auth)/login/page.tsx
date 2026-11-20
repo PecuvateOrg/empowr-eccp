@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function LoginPage() {
   const coach = await getCurrentCoach();
-  if (coach) redirect(can(coach, "view_management") ? "/management" : "/course");
+  if (coach) redirect(can(coach, "view_management") ? "/management" : "/dashboard");
 
   return (
     <main className="flex min-h-screen items-center justify-center px-5 py-16">
