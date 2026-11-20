@@ -10,8 +10,8 @@ export function InstallECCPApp() {
  const [message, setMessage] = useState("");
  useEffect(() => {
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => setMessage("App installation is currently unavailable."));
-  setInstalled(window.matchMedia("(display-mode: standalone)").matches || ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone)));
-  setPlatform(/iPad|iPhone|iPod/.test(navigator.userAgent) ? "ios" : "other");
+  queueMicrotask(() => setInstalled(window.matchMedia("(display-mode: standalone)").matches || ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone))));
+  queueMicrotask(() => setPlatform(/iPad|iPhone|iPod/.test(navigator.userAgent) ? "ios" : "other"));
   const onPrompt = (event: Event) => { event.preventDefault(); setPrompt(event as InstallPrompt); };
   const onInstalled = () => { setInstalled(true); setPrompt(null); setMessage("Empowr ECCP has been added to your device."); };
   window.addEventListener("beforeinstallprompt", onPrompt);
