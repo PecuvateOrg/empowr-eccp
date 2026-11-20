@@ -15,7 +15,7 @@ export async function POST(request: Request) {
  // The RPC must create conversation, participant, first entry and audit event atomically.
  // No client-supplied creator, assignee or participant IDs are trusted.
  const { data, error } = await getDb().rpc("message_create_staff_enquiry", {
-   p_actor_id: auth.actor!.id, p_category: input.category, p_title: input.title.trim(), p_body: input.body.trim(),
+   p_session_token: auth.token!, p_category: input.category, p_title: input.title.trim(), p_body: input.body.trim(),
  });
  if (error) return fail("Message creation unavailable", 503);
  return NextResponse.json({ conversationId: data }, { status: 201 });
