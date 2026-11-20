@@ -10,6 +10,8 @@ const nunito = Nunito({
 
 export const metadata: Metadata = {
   title: "Empowr ECCP",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Empowr ECCP", statusBarStyle: "default" },
   description: "Empowr's pathway from member to certified coach.",
 };
 
