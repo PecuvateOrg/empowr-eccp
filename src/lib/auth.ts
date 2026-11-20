@@ -110,26 +110,32 @@ export async function verifyOtp(
 
   await db.from("otp_tokens").update({ used: true }).eq("id", row.id);
 
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
+  if (!(await openSession(coach.id, SESSION_DURATION_DAYS * 24))) {
+    return { ok: false, reason: "invalid" };
+  }
 
-  const { data: session } = await db
+  return { ok: true, coach };
+}
+
+// The one place a session is created (email code: 30 days; Dashboard SSO: a
+// hard 12 hours). Sessions are never extended: expires_at is fixed here.
+export async function openSession(coachId: string, hours: number): Promise<boolean> {
+  const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+  const { data: session } = await getDb()
     .from("coach_sessions")
-    .insert({ coach_id: coach.id, expires_at: expiresAt.toISOString() })
+    .insert({ coach_id: coachId, expires_at: expiresAt.toISOString() })
     .select("refresh_token")
     .single();
-
-  if (!session) return { ok: false, reason: "invalid" };
+  if (!session) return false;
 
   (await cookies()).set(SESSION_COOKIE, session.refresh_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
+    maxAge: hours * 60 * 60,
   });
-
-  return { ok: true, coach };
+  return true;
 }
 
 // The only way to identify the caller. Every route handler and protected
