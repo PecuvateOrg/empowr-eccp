@@ -13,14 +13,10 @@ export default async function CoachDashboardPage() {
  const total = courseModules.length;
  const passed = attempts.some(a => a.passed);
  const status = passed ? "Completed" : completed === 0 ? "Not started" : "In progress";
- const trainingHref = passed ? "/certificate" : "/course";
- const trainingAction = passed ? "View certificate" : completed ? "Continue training" : "Start training";
  const cards = [
   { title: "My sessions & shifts", description: "Your assigned coaching sessions and shift details will appear here once scheduling is connected.", href: null, action: "Coming soon" },
-  { title: "My availability", description: "Let the team know when you are available for coaching.", href: "/availability", action: "Update availability" },
   { title: "Team messages", description: "Contact the staff team and chat with invited coaches in your session groups once messaging is enabled.", href: null, action: "Coming soon" },
-  { title: "My development", description: "Access additional training and track your coaching progression as new courses become available.", href: "/course", action: "Explore training" },
-  { title: "My coach profile", description: "Review your account details and emergency contact information.", href: "/profile", action: "View profile" },
+  { title: "My coach profile", description: "Review your account details, emergency contacts and coaching availability.", href: "/profile", action: "View profile" },
  ] as const;
  return <main className="py-10">
   <p className="text-xs font-black uppercase tracking-widest text-red-dark">Empowr Certified Coaching Programme</p>
@@ -28,15 +24,18 @@ export default async function CoachDashboardPage() {
   <p className="mt-3 max-w-3xl text-muted">Welcome to your Empowr Coaching Hub. Everything you need to grow as a coach, complete your training, manage your sessions and stay connected with the team — all in one place.</p>
   <section className="mt-8 rounded-2xl border border-border bg-card p-6">
    <div className="flex flex-wrap items-center justify-between gap-3">
-    <h2 className="text-xl font-bold text-ink">Safeguarding training</h2>
+    <h2 className="text-xl font-bold text-ink">My Training</h2>
+    <span className="text-sm text-muted">Courses and certificates</span>
+   </div>
+   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
+    <div>
+     <h3 className="font-bold text-ink">Safeguarding</h3>
+     <p className="mt-1 text-sm text-muted">{completed} of {total} modules complete</p>
+    </div>
     <span className="rounded-full bg-blue-pale px-3 py-1 text-sm font-bold text-blue-dark">{status}</span>
    </div>
-   <p className="mt-2 text-sm text-muted">{passed ? "You've passed your safeguarding assessment." : "Complete your safeguarding modules and assessment to progress."}</p>
-   <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-blue-pale" role="progressbar" aria-label="Safeguarding modules completed" aria-valuemin={0} aria-valuemax={total} aria-valuenow={completed}>
-    <div className="h-full bg-blue" style={{ width: `${Math.round(completed / total * 100)}%` }} />
-   </div>
-   <p className="mt-2 text-sm text-muted">{completed} of {total} modules complete</p>
-   <Link className="mt-4 inline-flex rounded-full bg-blue px-5 py-3 font-bold text-white hover:bg-blue-dark" href={trainingHref}>{trainingAction}</Link>
+   <p className="mt-3 text-sm text-muted">Your completed training, certificates and future courses are all in one place.</p>
+   <Link className="mt-4 inline-flex rounded-full bg-blue px-5 py-3 font-bold text-white hover:bg-blue-dark" href="/training">Open My Training</Link>
   </section>
   <div className="mt-6 grid gap-4 sm:grid-cols-2">
    {cards.map(card => <section key={card.title} className="rounded-2xl border border-border bg-card p-6">
