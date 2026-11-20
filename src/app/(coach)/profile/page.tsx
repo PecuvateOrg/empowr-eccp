@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentCoach } from "@/lib/auth";
 import { CoachProfileForm } from "@/components/CoachProfileForm";
 import { CoachAvailabilityForm } from "@/components/CoachAvailabilityForm";
+import { InstallECCPApp } from "@/components/InstallECCPApp";
 
 export default async function CoachProfilePage() {
   const coach = await getCurrentCoach();
@@ -35,6 +36,7 @@ export default async function CoachProfilePage() {
         </p>
       </section>
 
+      <InstallECCPApp />
       <CoachProfileForm />
       <section id="availability" className="mt-8 scroll-mt-6 rounded-xl border border-border p-6">
         <h2 className="text-lg font-bold">My availability</h2>
