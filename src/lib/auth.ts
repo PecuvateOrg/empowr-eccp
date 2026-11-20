@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getDb } from "./supabase";
+import { hasCoachPermission, type AdminRole, type CoachPermission } from "./coach-permissions";
 
 const SESSION_DURATION_DAYS = 30;
 const CODE_TTL_MINUTES = 10;
@@ -10,7 +11,14 @@ export interface Coach {
   id: string;
   email: string;
   full_name: string;
-  is_staff: boolean;
+  // Trusted role from eccp.coaches.admin_role (admin / staff / coach).
+  admin_role: AdminRole;
+}
+
+// Every access check goes through here. Fails closed: a missing or unknown
+// role grants nothing.
+export function can(coach: Coach, permission: CoachPermission): boolean {
+  return hasCoachPermission(coach.admin_role, permission);
 }
 
 function generateCode(): string {
@@ -33,7 +41,7 @@ async function hashCode(code: string, email: string): Promise<string> {
 export async function findCoachByEmail(email: string): Promise<Coach | null> {
   const { data, error } = await getDb()
     .from("coaches")
-    .select("id, email, full_name, is_staff")
+    .select("id, email, full_name, admin_role")
     .eq("email", email.trim().toLowerCase())
     .maybeSingle();
 
@@ -143,7 +151,7 @@ export async function getCurrentCoach(): Promise<Coach | null> {
 
   const { data: coach } = await db
     .from("coaches")
-    .select("id, email, full_name, is_staff")
+    .select("id, email, full_name, admin_role")
     .eq("id", session.coach_id)
     .maybeSingle();
 

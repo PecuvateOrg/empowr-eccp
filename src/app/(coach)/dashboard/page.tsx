@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentCoach } from "@/lib/auth";
+import { can, getCurrentCoach } from "@/lib/auth";
 import { getProgress, completedCount } from "@/lib/progress";
 import { getAttempts } from "@/lib/assessment";
 import { courseModules } from "@/lib/safeguarding-course";
@@ -45,7 +45,7 @@ export default async function CoachDashboardPage() {
     {card.href ? <Link className="mt-4 inline-flex rounded-full border border-blue px-4 py-2 text-sm font-bold text-blue-dark hover:bg-blue-pale" href={card.href}>{card.action}</Link> :
      <span className="mt-4 inline-flex rounded-full bg-warm-white px-4 py-2 text-sm font-bold text-muted">{card.action}</span>}
    </section>)}
-   {coach.is_staff && <section className="rounded-2xl border border-border bg-card p-6">
+   {can(coach, "view_management") && <section className="rounded-2xl border border-border bg-card p-6">
     <h2 className="text-lg font-bold text-ink">Management</h2>
     <p className="mt-2 text-sm text-muted">Open the staff management area.</p>
     <Link className="mt-4 inline-flex rounded-full border border-blue px-4 py-2 text-sm font-bold text-blue-dark" href="/management">Open management</Link>

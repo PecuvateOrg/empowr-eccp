@@ -25,6 +25,8 @@ export function hasCoachPermission(
     case "invite_coach":
     case "review_compliance":
       return role === "admin" || role === "staff";
+    default:
+      return false;
     case "activate_coach":
     case "approve_financial_exception":
     case "change_roles":

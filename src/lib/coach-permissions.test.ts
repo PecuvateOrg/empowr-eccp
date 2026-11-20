@@ -38,3 +38,10 @@ test("coaches have no management permissions", () => {
     assert.equal(hasCoachPermission("coach", permission), false);
   }
 });
+
+test("an unknown or missing role grants nothing (fails closed)", () => {
+  for (const permission of permissions) {
+    assert.equal(hasCoachPermission(undefined as unknown as AdminRole, permission), false);
+    assert.equal(hasCoachPermission("super_admin" as unknown as AdminRole, permission), false);
+  }
+});

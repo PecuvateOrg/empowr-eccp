@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentCoach } from "@/lib/auth";
+import { can, getCurrentCoach } from "@/lib/auth";
 import { BrandMark } from "@/components/BrandMark";
 import { SignOutButton } from "@/components/SignOutButton";
 
@@ -20,7 +20,7 @@ export default async function CoachLayout({
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <BrandMark href="/dashboard" label="ECCP" />
         <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-3 text-sm">
-          {coach.is_staff ? (
+          {can(coach, "view_management") ? (
             <Link className="font-bold text-blue hover:text-blue-dark" href="/management">
               Management
             </Link>

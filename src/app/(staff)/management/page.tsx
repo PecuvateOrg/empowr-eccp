@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentCoach } from "@/lib/auth";
+import { can, getCurrentCoach } from "@/lib/auth";
 import { getManagementOverview } from "@/lib/management";
 import { ProvisionCoachForm } from "./ProvisionCoachForm";
 
@@ -16,7 +16,7 @@ export default async function ManagementPage() {
   // renders; this repeats the check because getManagementOverview requires
   // it — see the comment there for why the second gate exists.
   const coach = await getCurrentCoach();
-  if (!coach || !coach.is_staff) redirect("/course");
+  if (!coach || !can(coach, "view_management")) redirect("/course");
 
   const roster = await getManagementOverview(coach);
 
@@ -56,9 +56,9 @@ export default async function ManagementPage() {
                 <td className="px-4 py-3">
                   <div className="font-bold text-ink">
                     {entry.fullName}
-                    {entry.isStaff ? (
+                    {entry.role !== "coach" ? (
                       <span className="ml-2 rounded-full bg-blue/10 px-2 py-0.5 text-xs font-bold text-blue">
-                        Staff
+                        {entry.role === "admin" ? "Admin" : "Staff"}
                       </span>
                     ) : null}
                   </div>
