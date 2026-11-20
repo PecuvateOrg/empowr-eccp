@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { can, getCurrentCoach } from "@/lib/auth";
 import { getManagementOverview } from "@/lib/management";
 import { ProvisionCoachForm } from "./ProvisionCoachForm";
+import { CoachingGradeEditor } from "./CoachingGradeEditor";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -45,6 +46,7 @@ export default async function ManagementPage() {
           <thead>
             <tr className="border-b border-border bg-warm-white text-xs font-bold uppercase tracking-wide text-muted">
               <th className="px-4 py-3">Coach</th>
+              <th className="px-4 py-3">Coaching grade</th>
               <th className="px-4 py-3">Latest attempt</th>
               <th className="px-4 py-3">Certificate</th>
               <th className="px-4 py-3">Renews</th>
@@ -64,6 +66,7 @@ export default async function ManagementPage() {
                   </div>
                   <div className="text-muted">{entry.email}</div>
                 </td>
+                <td className="px-4 py-3"><CoachingGradeEditor coachId={entry.id} initialGrade={entry.coachingGrade} canEdit={can(coach, "change_roles")} /></td>
                 <td className="px-4 py-3">
                   {entry.latestAttempt ? (
                     <span
