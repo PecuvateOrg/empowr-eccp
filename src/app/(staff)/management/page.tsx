@@ -56,11 +56,6 @@ export default async function ManagementPage() {
                 <td className="px-4 py-3">
                   <div className="font-bold text-ink">
                     {entry.fullName}
-                    {entry.role !== "coach" ? (
-                      <span className="ml-2 rounded-full bg-blue/10 px-2 py-0.5 text-xs font-bold text-blue">
-                        {entry.role === "admin" ? "Admin" : "Staff"}
-                      </span>
-                    ) : null}
                   </div>
                   <div className="text-muted">{entry.email}</div>
                 </td>

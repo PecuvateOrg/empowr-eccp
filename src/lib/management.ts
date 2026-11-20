@@ -1,13 +1,11 @@
 import { getDb } from "./supabase";
 import { sendWelcomeEmail } from "./email";
 import { can, type Coach } from "./auth";
-import type { AdminRole } from "./coach-permissions";
 
 export interface CoachOverview {
   readonly id: string;
   readonly email: string;
   readonly fullName: string;
-  readonly role: AdminRole;
   readonly latestAttempt: {
     readonly score: number;
     readonly passed: boolean;
@@ -38,7 +36,10 @@ export async function getManagementOverview(requestedBy: Coach): Promise<CoachOv
 
   const { data: coaches, error: coachError } = await db
     .from("coaches")
-    .select("id, email, full_name, admin_role")
+    .select("id, email, full_name")
+    // The roster lists coaches only: admin and staff accounts are not coaches
+    // (owner, 2026-11-20). A person who also coaches has a separate coach account.
+    .eq("admin_role", "coach")
     .order("full_name", { ascending: true });
   if (coachError) throw new Error(`coach list failed: ${coachError.message}`);
   if (!coaches || coaches.length === 0) return [];
@@ -80,7 +81,6 @@ export async function getManagementOverview(requestedBy: Coach): Promise<CoachOv
       id: coach.id,
       email: coach.email,
       fullName: coach.full_name,
-      role: coach.admin_role,
       latestAttempt: attempt
         ? { score: attempt.score, passed: attempt.passed, submittedAt: attempt.submitted_at }
         : null,
