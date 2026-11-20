@@ -3,35 +3,38 @@ import test from "node:test";
 import { hasCoachPermission } from "./coach-permissions";
 import type { AdminRole, CoachPermission } from "./coach-permissions";
 
-const roles: AdminRole[] = ["founder", "super_admin", "admin", "coach"];
+const roles: AdminRole[] = ["admin", "staff", "coach"];
 const permissions: CoachPermission[] = [
   "view_management",
   "invite_coach",
   "review_compliance",
   "activate_coach",
   "approve_financial_exception",
+  "change_roles",
 ];
 
-test("only the founder can activate coaches", () => {
-  for (const role of roles) {
-    assert.equal(hasCoachPermission(role, "activate_coach"), role === "founder");
+test("admin holds every permission", () => {
+  for (const permission of permissions) {
+    assert.equal(hasCoachPermission("admin", permission), true);
   }
 });
 
-test("coaches have no admin permissions", () => {
+test("only admin can activate coaches, approve exceptions or change roles", () => {
+  for (const role of roles) {
+    for (const p of ["activate_coach", "approve_financial_exception", "change_roles"] as const) {
+      assert.equal(hasCoachPermission(role, p), role === "admin");
+    }
+  }
+});
+
+test("staff can view, invite and review compliance", () => {
+  assert.equal(hasCoachPermission("staff", "view_management"), true);
+  assert.equal(hasCoachPermission("staff", "invite_coach"), true);
+  assert.equal(hasCoachPermission("staff", "review_compliance"), true);
+});
+
+test("coaches have no management permissions", () => {
   for (const permission of permissions) {
     assert.equal(hasCoachPermission("coach", permission), false);
   }
-});
-
-test("Eve-style admin can review and invite, not activate or approve financial exceptions", () => {
-  assert.equal(hasCoachPermission("admin", "review_compliance"), true);
-  assert.equal(hasCoachPermission("admin", "invite_coach"), true);
-  assert.equal(hasCoachPermission("admin", "activate_coach"), false);
-  assert.equal(hasCoachPermission("admin", "approve_financial_exception"), false);
-});
-
-test("super admin can approve financial exceptions but cannot activate", () => {
-  assert.equal(hasCoachPermission("super_admin", "approve_financial_exception"), true);
-  assert.equal(hasCoachPermission("super_admin", "activate_coach"), false);
 });

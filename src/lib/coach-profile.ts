@@ -22,8 +22,8 @@ function normalized(value: unknown, maxLength: number): string | null {
 
 function validPhone(value: string): boolean {
   // International-friendly phone check; no assumption that every coach has UK number.
-  return /^\\+?[0-9() .-]{7,25}$/.test(value) &&
-    (value.match(/\\d/g)?.length ?? 0) >= 7;
+  return /^\+?[0-9() .-]{7,25}$/.test(value) &&
+    (value.match(/\d/g)?.length ?? 0) >= 7;
 }
 
 export function validateCoachContactProfile(input: unknown): ProfileValidation {

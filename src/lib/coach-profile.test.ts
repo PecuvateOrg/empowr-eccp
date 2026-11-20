@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { validateCoachContactProfile } from "./coach-profile";
 test("validates and trims contact details", () => {
-  const result = validateCoachContactProfile({ phone: " +44 7700 900123 ", emergencyContactName: " Alex ", emergencyContactPhone: "07700900456", role: "founder" });
+  const result = validateCoachContactProfile({ phone: " +44 7700 900123 ", emergencyContactName: " Alex ", emergencyContactPhone: "07700900456", role: "admin" });
   assert.equal(result.ok, true);
   if (result.ok) {
     assert.equal(result.value.emergencyContactName, "Alex");

@@ -1,18 +1,20 @@
 /**
- * Phase 1 authorization policy.
+ * Phase 1 authorization policy (owner decision 2026-11-20).
  *
- * Never infer founder privileges from is_staff, display names, or client input.
+ * Three levels: admin (full privileges) > staff (scoped) > coach.
+ * Never infer a role from is_staff, display names, or client input.
  * The trusted role must be loaded from server-side ECCP persistence.
  * Existing staff access is retained until the role migration is deployed.
  */
-export type AdminRole = "founder" | "super_admin" | "admin" | "coach";
+export type AdminRole = "admin" | "staff" | "coach";
 
 export type CoachPermission =
   | "view_management"
   | "invite_coach"
   | "review_compliance"
   | "activate_coach"
-  | "approve_financial_exception";
+  | "approve_financial_exception"
+  | "change_roles";
 
 export function hasCoachPermission(
   role: AdminRole,
@@ -22,11 +24,11 @@ export function hasCoachPermission(
     case "view_management":
     case "invite_coach":
     case "review_compliance":
-      return role !== "coach";
+      return role === "admin" || role === "staff";
     case "activate_coach":
-      return role === "founder";
     case "approve_financial_exception":
-      return role === "founder" || role === "super_admin";
+    case "change_roles":
+      return role === "admin";
   }
 }
 
