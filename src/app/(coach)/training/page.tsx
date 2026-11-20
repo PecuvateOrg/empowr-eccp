@@ -15,8 +15,8 @@ export default async function MyTrainingPage() {
  const status = passed ? "Completed" : completed === 0 ? "Not started" : "In progress";
  return <main className="py-10">
   <Link href="/dashboard" className="text-sm font-semibold text-blue hover:underline">Back to coach portal</Link>
-  <h1 className="mt-5 text-3xl font-bold text-ink">My Training</h1>
-  <p className="mt-2 max-w-2xl text-muted">Your Empowr coaching courses, progress and certificates in one place.</p>
+  <h1 className="mt-5 text-3xl font-bold text-ink">My Training &amp; Compliance</h1>
+  <p className="mt-2 max-w-2xl text-muted">Your Empowr coaching courses, certificates and compliance requirements in one place.</p>
   <section className="mt-8 rounded-2xl border border-border bg-card p-6">
    <div className="flex flex-wrap items-center justify-between gap-3">
     <h2 className="text-xl font-bold text-ink">Safeguarding for Roller Skating Coaches</h2>
@@ -29,6 +29,22 @@ export default async function MyTrainingPage() {
    <div className="mt-5 flex flex-wrap gap-3">
     <Link href="/course" className="inline-flex rounded-full bg-blue px-5 py-3 text-sm font-bold text-white hover:bg-blue-dark">{passed ? "Review training" : completed ? "Continue training" : "Start training"}</Link>
     {passed && <Link href="/certificate" className="inline-flex rounded-full border border-blue px-5 py-3 text-sm font-bold text-blue-dark hover:bg-blue-pale">View / download certificate</Link>}
+   </div>
+  </section>
+  <section className="mt-9">
+   <h2 className="text-xl font-bold text-ink">Compliance checks</h2>
+   <p className="mt-2 text-sm text-muted">These checks are verified by authorized Empowr management staff. Your individual verification records are not yet connected to this page.</p>
+   <div className="mt-4 grid gap-4 sm:grid-cols-2">
+    <div className="rounded-2xl border border-border bg-card p-5">
+     <h3 className="font-bold text-ink">First Aid Certification</h3>
+     <p className="mt-2 text-sm text-muted">Required for Head Coaches. Verification and renewal tracking are being developed.</p>
+     <p className="mt-3 text-sm font-semibold text-muted">Verification status unavailable</p>
+    </div>
+    <div className="rounded-2xl border border-border bg-card p-5">
+     <h3 className="font-bold text-ink">DBS Check</h3>
+     <p className="mt-2 text-sm text-muted">Management verification and policy recheck tracking are being developed. DBS certificates do not have a statutory expiry date.</p>
+     <p className="mt-3 text-sm font-semibold text-muted">Verification status unavailable</p>
+    </div>
    </div>
   </section>
   <h2 className="mt-9 text-xl font-bold text-ink">Other training</h2>
