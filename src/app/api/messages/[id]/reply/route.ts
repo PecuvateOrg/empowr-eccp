@@ -17,8 +17,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
  try { payload = await request.json(); } catch { return fail("Invalid JSON", 400); }
  if (!payload || typeof payload !== "object" || !messageBody((payload as Record<string, unknown>).body)) return fail("Invalid message", 400);
  const { data, error } = await getDb().rpc("message_add_entry", {
-   p_actor_id: actor.id, p_conversation_id: id, p_body: (payload as { body: string }).body.trim(),
-   p_internal_note: false, p_is_staff: actor.is_staff,
+   p_session_token: auth.token!, p_conversation_id: id, p_body: (payload as { body: string }).body.trim(),
+   p_internal_note: false,
  });
  if (error) return fail("Reply unavailable", 503);
  return NextResponse.json({ messageId: data }, { status: 201 });
