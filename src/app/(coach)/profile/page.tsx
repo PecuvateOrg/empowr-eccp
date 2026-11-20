@@ -3,10 +3,13 @@ import Link from "next/link";
 import { getCurrentCoach } from "@/lib/auth";
 import { CoachProfileForm } from "@/components/CoachProfileForm";
 import { CoachAvailabilityForm } from "@/components/CoachAvailabilityForm";
+import { getDb } from "@/lib/supabase";
+import { coachingGradeLabel } from "@/lib/coaching-grade";
 
 export default async function CoachProfilePage() {
   const coach = await getCurrentCoach();
   if (!coach) redirect("/login");
+  const { data: gradeRow } = await getDb().from("coaches").select("coaching_grade").eq("id", coach.id).maybeSingle();
 
   return (
     <main className="mx-auto w-full max-w-2xl py-10">
@@ -24,6 +27,10 @@ export default async function CoachProfilePage() {
           <div>
             <dt className="text-sm text-muted">Full name</dt>
             <dd className="font-medium">{coach.full_name}</dd>
+          </div>
+          <div>
+            <dt className="text-sm text-muted">Coaching grade</dt>
+            <dd className="font-medium">{coachingGradeLabel(gradeRow?.coaching_grade ?? null)}</dd>
           </div>
           <div>
             <dt className="text-sm text-muted">Email address</dt>
