@@ -38,8 +38,8 @@ export function StaffMessaging({ canManage }: { canManage:boolean }) {
    setEntries(data.messages??[]);setError("");
   }catch(e){setError(e instanceof Error?e.message:"Unable to load conversation");setEntries([]);}
  },[]);
- useEffect(()=>{void refresh();},[refresh]);
- useEffect(()=>{if(selected)void loadEntries(selected);else setEntries([]);},[selected,loadEntries]);
+ useEffect(()=>{const start=()=>{void refresh();};start();},[refresh]);
+ useEffect(()=>{if(selected){void loadEntries(selected);}},[selected,loadEntries]);
  async function submit(e:FormEvent<HTMLFormElement>){
   e.preventDefault();if(!selected||!message.trim()||sending)return;
   setSending(true);setError("");setSuccess("");
@@ -65,7 +65,7 @@ export function StaffMessaging({ canManage }: { canManage:boolean }) {
   <div className="rounded-2xl border border-border bg-card p-5">
    <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-bold">Conversations</h2><button type="button" onClick={()=>void refresh()} className="text-sm font-bold text-blue underline">Refresh</button></div>
    {loading?<p role="status" className="mt-4 text-sm">Loading inbox…</p>:threads.length===0?<p className="mt-4 text-sm text-muted">No coach enquiries yet.</p>:
-   <ul className="mt-4 space-y-2">{threads.map(t=><li key={t.id}><button type="button" onClick={()=>{setSelected(t.id);setMessage("");pendingKey.current=null;setSuccess("");}} aria-current={selected===t.id?"true":undefined} className={`w-full rounded-xl border p-3 text-left ${selected===t.id?"border-blue bg-blue-pale":"border-border hover:bg-cream"}`}>
+   <ul className="mt-4 space-y-2">{threads.map(t=><li key={t.id}><button type="button" onClick={()=>{setSelected(t.id);setEntries([]);setMessage("");pendingKey.current=null;setSuccess("");}} aria-current={selected===t.id?"true":undefined} className={`w-full rounded-xl border p-3 text-left ${selected===t.id?"border-blue bg-blue-pale":"border-border hover:bg-cream"}`}>
     <span className="block font-bold">{t.title}</span><span className="mt-1 block text-xs text-muted">{t.category} · {t.status} · {t.priority}</span>
    </button></li>)}</ul>}
   </div>
