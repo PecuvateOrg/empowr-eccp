@@ -1,6 +1,6 @@
 # Agent Instructions
 
-Read `CLAUDE.md` first. It is the canonical MWP Layer 0 file for this project and contains the routing table, project-wide rules, deployment metadata, and token-management instructions.
+Read `CLAUDE.md` first. It is the canonical MWP Layer 0 file for this project and contains the routing table, project-wide rules, deployment metadata, and token-management instructions. Then read `NON-NEGOTIABLES.md`, which includes the check to run before every push.
 
 Then read these files when present and relevant:
 

@@ -25,6 +25,7 @@ export default async function CoachLayout({
               Management
             </Link>
           ) : null}
+          {process.env.ECCP_MESSAGING_ENABLED === "true" ? (<Link className="font-semibold text-blue hover:text-blue-dark" href="/messages">Messages</Link>) : null}
           <span className="text-muted">{coach.full_name}</span>
           <SignOutButton />
         </div>

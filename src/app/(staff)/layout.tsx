@@ -23,6 +23,7 @@ export default async function StaffLayout({
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <BrandMark href="/management" label="ECCP — Management" />
         <div className="flex items-center gap-4 text-sm">
+          {process.env.ECCP_MESSAGING_ENABLED === "true" ? (<Link className="font-bold text-blue hover:text-blue-dark" href="/management/messages">Staff Inbox</Link>) : null}
           <Link className="font-bold text-blue hover:text-blue-dark" href="/course">
             Coach view
           </Link>
