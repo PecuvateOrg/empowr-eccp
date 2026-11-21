@@ -39,7 +39,8 @@ export default async function ManagementPage() {
       </p>
 
       <p className="mt-4 text-sm"><a href="/management/onboarding-preview" className="font-bold text-blue underline">View mock coach onboarding tracker</a> — sample data only.</p>
-      <p className="mt-3 text-sm"><a href="/management/compliance-preview" className="font-bold text-blue underline">View example coach compliance dashboard</a> — fictional records only.</p>\n      <ProvisionCoachForm />
+      <p className="mt-3 text-sm"><a href="/management/compliance-preview" className="font-bold text-blue underline">View example coach compliance dashboard</a> — fictional records only.</p>
+      <ProvisionCoachForm />
 
       <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-card">
         <table className="w-full min-w-[720px] text-left text-sm">
