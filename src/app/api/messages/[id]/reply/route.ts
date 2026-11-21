@@ -4,7 +4,7 @@ import { getDb } from "@/lib/supabase";
 import { actorForWrite, fail, messageBody, ordinaryConversation, uuid, isParticipant } from "@/lib/messaging-write";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
- const auth = await actorForWrite();
+ const auth = await actorForWrite(request);
  if (auth.error) return auth.error;
  const { id } = await context.params;
  if (!uuid(id)) return fail("Invalid conversation", 400);
