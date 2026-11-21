@@ -41,6 +41,7 @@ export default async function CoachProfilePage() {
       <section id="availability" className="mt-8 scroll-mt-6 rounded-xl border border-border p-6">
         <h2 className="text-lg font-bold">My availability</h2>
         <p className="mt-2 text-sm text-muted">Manage your usual coaching days and times and any exceptions.</p>
+        <p className="mt-4 text-sm"><Link href="/availability-preview" className="font-semibold text-blue underline">Try the new availability layout (example only)</Link></p>
         <CoachAvailabilityForm />
       </section>
     </main>
