@@ -14,44 +14,54 @@ $$;
 revoke all on function eccp.message_actor(text) from public, anon, authenticated;
 
 create or replace function eccp.message_create_staff_enquiry(
- p_session_token text, p_category text, p_title text, p_body text)
+ p_session_token text, p_category text, p_title text, p_body text, p_idempotency_key uuid)
 returns uuid language plpgsql security definer set search_path = eccp, pg_temp as $$
 declare v_actor uuid; v_id uuid;
 begin
  select actor_id into v_actor from eccp.message_actor(p_session_token);
  if v_actor is null then raise exception 'unauthorized'; end if;
+ if p_idempotency_key is null then raise exception 'idempotency key required'; end if;
+ perform pg_advisory_xact_lock(hashtextextended(v_actor::text || ':create', 0));
+ select id into v_id from eccp.message_conversations where created_by=v_actor and idempotency_key=p_idempotency_key;
+ if v_id is not null then return v_id; end if;
+ if (select count(*) from eccp.message_conversations where created_by=v_actor and created_at > now()-interval '1 minute') >= 5 then raise exception 'rate limited'; end if;
  if p_category not in ('scheduling','training','general','other')
  or length(trim(p_title)) not between 1 and 120
  or length(trim(p_body)) not between 1 and 10000 then raise exception 'invalid input'; end if;
- insert into eccp.message_conversations(kind,category,title,created_by)
- values ('staff_inbox',p_category,trim(p_title),v_actor) returning id into v_id;
+ insert into eccp.message_conversations(kind,category,title,created_by,idempotency_key)
+ values ('staff_inbox',p_category,trim(p_title),v_actor,p_idempotency_key) returning id into v_id;
  insert into eccp.message_participants(conversation_id,coach_id) values(v_id,v_actor);
  insert into eccp.message_entries(conversation_id,author_id,body) values(v_id,v_actor,trim(p_body));
  insert into eccp.message_events(conversation_id,actor_id,event_type) values(v_id,v_actor,'created');
  return v_id;
 end $$;
-revoke all on function eccp.message_create_staff_enquiry(text,text,text,text) from public, anon, authenticated;
+revoke all on function eccp.message_create_staff_enquiry(text,text,text,text,uuid) from public, anon, authenticated;
 
 create or replace function eccp.message_add_entry(
- p_session_token text, p_conversation_id uuid, p_body text, p_internal_note boolean default false)
+ p_session_token text, p_conversation_id uuid, p_body text, p_internal_note boolean, p_idempotency_key uuid)
 returns uuid language plpgsql security definer set search_path = eccp, pg_temp as $$
 declare v_actor uuid; v_role text; v_kind text; v_entry uuid; v_member boolean;
 begin
  select actor_id, actor_role into v_actor,v_role from eccp.message_actor(p_session_token);
  if v_actor is null then raise exception 'unauthorized'; end if;
+ if p_idempotency_key is null then raise exception 'idempotency key required'; end if;
+ perform pg_advisory_xact_lock(hashtextextended(v_actor::text || ':entry', 0));
  if length(trim(p_body)) not between 1 and 10000 then raise exception 'invalid body'; end if;
  select kind into v_kind from eccp.message_conversations where id=p_conversation_id for update;
  if v_kind is null or v_kind='safeguarding' then raise exception 'not found'; end if;
  select exists(select 1 from eccp.message_participants where conversation_id=p_conversation_id and coach_id=v_actor) into v_member;
  if not v_member and not (v_kind='staff_inbox' and v_role in ('staff','admin')) then raise exception 'forbidden'; end if;
  if p_internal_note and not (v_kind='staff_inbox' and v_role in ('staff','admin')) then raise exception 'forbidden'; end if;
- insert into eccp.message_entries(conversation_id,author_id,body,internal_note)
- values(p_conversation_id,v_actor,trim(p_body),p_internal_note) returning id into v_entry;
+ select id into v_entry from eccp.message_entries where author_id=v_actor and idempotency_key=p_idempotency_key;
+ if v_entry is not null then return v_entry; end if;
+ if (select count(*) from eccp.message_entries where author_id=v_actor and created_at > now()-interval '1 minute') >= 15 then raise exception 'rate limited'; end if;
+ insert into eccp.message_entries(conversation_id,author_id,body,internal_note,idempotency_key)
+ values(p_conversation_id,v_actor,trim(p_body),p_internal_note,p_idempotency_key) returning id into v_entry;
  update eccp.message_conversations set updated_at=now() where id=p_conversation_id;
  insert into eccp.message_events(conversation_id,actor_id,event_type) values(p_conversation_id,v_actor,case when p_internal_note then 'note_added' else 'replied' end);
  return v_entry;
 end $$;
-revoke all on function eccp.message_add_entry(text,uuid,text,boolean) from public, anon, authenticated;
+revoke all on function eccp.message_add_entry(text,uuid,text,boolean,uuid) from public, anon, authenticated;
 
 create or replace function eccp.message_manage_staff_enquiry(
  p_session_token text, p_conversation_id uuid, p_has_assignee boolean,
@@ -82,6 +92,6 @@ revoke all on function eccp.message_manage_staff_enquiry(text,uuid,boolean,uuid,
 
 -- Explicit service-role grants only. Test role mapping and RPC exposure in staging.
 grant execute on function eccp.message_actor(text) to service_role;
-grant execute on function eccp.message_create_staff_enquiry(text,text,text,text) to service_role;
-grant execute on function eccp.message_add_entry(text,uuid,text,boolean) to service_role;
+grant execute on function eccp.message_create_staff_enquiry(text,text,text,text,uuid) to service_role;
+grant execute on function eccp.message_add_entry(text,uuid,text,boolean,uuid) to service_role;
 grant execute on function eccp.message_manage_staff_enquiry(text,uuid,boolean,uuid,text,text) to service_role;
