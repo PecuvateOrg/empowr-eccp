@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/supabase";
-import { actorForWrite, fail, messageBody, uuid } from "@/lib/messaging-write";
+import { actorForWrite, fail, messageBody, textOnlyMessagingPayload, uuid } from "@/lib/messaging-write";
 
 const categories = ["scheduling", "training", "general", "other"] as const;
 export async function POST(request: Request) {
@@ -10,6 +10,7 @@ export async function POST(request: Request) {
  try { payload = await request.json(); } catch { return fail("Invalid JSON", 400); }
  if (!payload || typeof payload !== "object") return fail("Invalid request", 400);
  const input = payload as Record<string, unknown>;
+ if (!textOnlyMessagingPayload(request, input)) return fail("Only JSON text messages are supported", 415);
  if (!uuid(input.idempotencyKey)) return fail("Valid idempotencyKey required", 400);
  if (!messageBody(input.body) || !categories.some(c => c === input.category)) return fail("Invalid message or category", 400);
  if (typeof input.title !== "string" || !input.title.trim() || input.title.length > 120) return fail("Invalid title", 400);
