@@ -7,6 +7,7 @@ create table if not exists eccp.message_conversations (
  category text not null check (category in ('scheduling','training','safeguarding','general','other')),
  title text not null default '',
  external_session_id text,
+ idempotency_key uuid,
  assigned_staff_id uuid references eccp.coaches(id) on delete set null,
  priority text not null default 'medium' check (priority in ('low','medium','high','urgent')),
  status text not null default 'new' check (status in ('new','in_progress','waiting_for_coach','resolved')),
@@ -34,8 +35,17 @@ create table if not exists eccp.message_entries (
  author_id uuid not null references eccp.coaches(id),
  body text not null check (char_length(body) between 1 and 10000),
  internal_note boolean not null default false,
+ idempotency_key uuid,
  created_at timestamptz not null default now()
 );
+create unique index if not exists message_conversations_actor_idempotency_idx
+ on eccp.message_conversations(created_by, idempotency_key) where idempotency_key is not null;
+create unique index if not exists message_entries_actor_idempotency_idx
+ on eccp.message_entries(author_id, idempotency_key) where idempotency_key is not null;
+create index if not exists message_entries_author_rate_idx
+ on eccp.message_entries(author_id, created_at);
+create index if not exists message_conversations_author_rate_idx
+ on eccp.message_conversations(created_by, created_at);
 create index if not exists message_entries_thread_idx on eccp.message_entries(conversation_id, created_at);
 create table if not exists eccp.message_events (
  id uuid primary key default gen_random_uuid(),
