@@ -16,14 +16,23 @@ revoke all on function eccp.message_actor(text) from public, anon, authenticated
 create or replace function eccp.message_create_staff_enquiry(
  p_session_token text, p_category text, p_title text, p_body text, p_idempotency_key uuid)
 returns uuid language plpgsql security definer set search_path = eccp, pg_temp as $$
-declare v_actor uuid; v_id uuid;
+declare v_actor uuid; v_id uuid; v_previous_category text; v_previous_title text; v_previous_body text;
 begin
  select actor_id into v_actor from eccp.message_actor(p_session_token);
  if v_actor is null then raise exception 'unauthorized'; end if;
  if p_idempotency_key is null then raise exception 'idempotency key required'; end if;
  perform pg_advisory_xact_lock(hashtextextended(v_actor::text || ':create', 0));
- select id into v_id from eccp.message_conversations where created_by=v_actor and idempotency_key=p_idempotency_key;
- if v_id is not null then return v_id; end if;
+ select mc.id, mc.category, mc.title,
+   (select me.body from eccp.message_entries me where me.conversation_id=mc.id and me.author_id=v_actor and me.internal_note=false order by me.created_at,me.id limit 1)
+ into v_id,v_previous_category,v_previous_title,v_previous_body
+ from eccp.message_conversations mc where mc.created_by=v_actor and mc.idempotency_key=p_idempotency_key;
+ if v_id is not null then
+  if v_previous_category is distinct from p_category
+   or v_previous_title is distinct from trim(p_title)
+   or v_previous_body is distinct from trim(p_body)
+  then raise exception 'idempotency key reused with different payload'; end if;
+  return v_id;
+ end if;
  if (select count(*) from eccp.message_conversations where created_by=v_actor and created_at > now()-interval '1 minute') >= 5 then raise exception 'rate limited'; end if;
  if p_category not in ('scheduling','training','general','other')
  or length(trim(p_title)) not between 1 and 120
@@ -40,7 +49,7 @@ revoke all on function eccp.message_create_staff_enquiry(text,text,text,text,uui
 create or replace function eccp.message_add_entry(
  p_session_token text, p_conversation_id uuid, p_body text, p_internal_note boolean, p_idempotency_key uuid)
 returns uuid language plpgsql security definer set search_path = eccp, pg_temp as $$
-declare v_actor uuid; v_role text; v_kind text; v_entry uuid; v_member boolean;
+declare v_actor uuid; v_role text; v_kind text; v_entry uuid; v_member boolean; v_previous_conversation uuid; v_previous_body text; v_previous_note boolean;
 begin
  select actor_id, actor_role into v_actor,v_role from eccp.message_actor(p_session_token);
  if v_actor is null then raise exception 'unauthorized'; end if;
@@ -52,8 +61,15 @@ begin
  select exists(select 1 from eccp.message_participants where conversation_id=p_conversation_id and coach_id=v_actor) into v_member;
  if not v_member and not (v_kind='staff_inbox' and v_role in ('staff','admin')) then raise exception 'forbidden'; end if;
  if p_internal_note and not (v_kind='staff_inbox' and v_role in ('staff','admin')) then raise exception 'forbidden'; end if;
- select id into v_entry from eccp.message_entries where author_id=v_actor and idempotency_key=p_idempotency_key;
- if v_entry is not null then return v_entry; end if;
+ select id,conversation_id,body,internal_note into v_entry,v_previous_conversation,v_previous_body,v_previous_note
+ from eccp.message_entries where author_id=v_actor and idempotency_key=p_idempotency_key;
+ if v_entry is not null then
+  if v_previous_conversation is distinct from p_conversation_id
+   or v_previous_body is distinct from trim(p_body)
+   or v_previous_note is distinct from p_internal_note
+  then raise exception 'idempotency key reused with different payload'; end if;
+  return v_entry;
+ end if;
  if (select count(*) from eccp.message_entries where author_id=v_actor and created_at > now()-interval '1 minute') >= 15 then raise exception 'rate limited'; end if;
  insert into eccp.message_entries(conversation_id,author_id,body,internal_note,idempotency_key)
  values(p_conversation_id,v_actor,trim(p_body),p_internal_note,p_idempotency_key) returning id into v_entry;
