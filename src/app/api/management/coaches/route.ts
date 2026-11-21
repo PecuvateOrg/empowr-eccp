@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentCoach } from "@/lib/auth";
+import { can, getCurrentCoach } from "@/lib/auth";
 import { provisionCoach } from "@/lib/management";
 
 export async function POST(request: Request) {
@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   if (!coach) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
-  if (!coach.is_staff) {
+  if (!can(coach, "invite_coach")) {
     return NextResponse.json({ error: "Not authorised" }, { status: 403 });
   }
 

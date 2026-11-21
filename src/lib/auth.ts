@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { getDb } from "./supabase";
+import { hasCoachPermission, type AdminRole, type CoachPermission } from "./coach-permissions";
 
 const SESSION_DURATION_DAYS = 30;
 const CODE_TTL_MINUTES = 10;
@@ -10,7 +11,14 @@ export interface Coach {
   id: string;
   email: string;
   full_name: string;
-  is_staff: boolean;
+  // Trusted role from eccp.coaches.admin_role (admin / staff / coach).
+  admin_role: AdminRole;
+}
+
+// Every access check goes through here. Fails closed: a missing or unknown
+// role grants nothing.
+export function can(coach: Coach, permission: CoachPermission): boolean {
+  return hasCoachPermission(coach.admin_role, permission);
 }
 
 function generateCode(): string {
@@ -33,7 +41,7 @@ async function hashCode(code: string, email: string): Promise<string> {
 export async function findCoachByEmail(email: string): Promise<Coach | null> {
   const { data, error } = await getDb()
     .from("coaches")
-    .select("id, email, full_name, is_staff")
+    .select("id, email, full_name, admin_role")
     .eq("email", email.trim().toLowerCase())
     .maybeSingle();
 
@@ -102,26 +110,32 @@ export async function verifyOtp(
 
   await db.from("otp_tokens").update({ used: true }).eq("id", row.id);
 
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS);
+  if (!(await openSession(coach.id, SESSION_DURATION_DAYS * 24))) {
+    return { ok: false, reason: "invalid" };
+  }
 
-  const { data: session } = await db
+  return { ok: true, coach };
+}
+
+// The one place a session is created (email code: 30 days; Dashboard SSO: a
+// hard 12 hours). Sessions are never extended: expires_at is fixed here.
+export async function openSession(coachId: string, hours: number): Promise<boolean> {
+  const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+  const { data: session } = await getDb()
     .from("coach_sessions")
-    .insert({ coach_id: coach.id, expires_at: expiresAt.toISOString() })
+    .insert({ coach_id: coachId, expires_at: expiresAt.toISOString() })
     .select("refresh_token")
     .single();
-
-  if (!session) return { ok: false, reason: "invalid" };
+  if (!session) return false;
 
   (await cookies()).set(SESSION_COOKIE, session.refresh_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
+    maxAge: hours * 60 * 60,
   });
-
-  return { ok: true, coach };
+  return true;
 }
 
 // The only way to identify the caller. Every route handler and protected
@@ -143,7 +157,7 @@ export async function getCurrentCoach(): Promise<Coach | null> {
 
   const { data: coach } = await db
     .from("coaches")
-    .select("id, email, full_name, is_staff")
+    .select("id, email, full_name, admin_role")
     .eq("id", session.coach_id)
     .maybeSingle();
 

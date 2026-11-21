@@ -10,6 +10,7 @@ stay switched off in code until checked.
 |---|---|---|
 | 1 | `../architecture/phase-1-database-migration.md` → Migration A | `coaches.admin_role` (`admin` / `staff` / `coach`) |
 | 2 | `coach-details-phase1.sql` | Contact profiles, weekly availability, exceptions, `replace_coach_availability` |
+| 3 | `coaching-grade.sql` | `coaches.coaching_grade`, grade audit table, `set_coaching_grade` (then set `ECCP_COACHING_GRADE_ENABLED=1`) |
 
 Session assignments are **not** ECCP tables. They live in EFN as `freelancer_tasks` (owner
 decision 2026-11-20). ECCP shows a coach their tasks through EFN's `/api/eccp/v1`.
