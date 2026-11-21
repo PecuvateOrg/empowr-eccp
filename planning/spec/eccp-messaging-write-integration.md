@@ -8,7 +8,7 @@ Added routes (feature-gated by `ECCP_MESSAGING_ENABLED=true`, OFF by default):
 
 **Do not enable in any environment yet.** The transactional PostgreSQL functions
 `message_create_staff_enquiry`, `message_add_entry` and
-`message_manage_staff_enquiry` are NOT implemented. Requests fail closed with
+`message_manage_staff_enquiry` exist only as an unexecuted staging SQL draft. They are NOT deployed or verified. Requests fail closed with
 503 if functions are absent. This is an API scaffold, not a working messaging system.
 
 Before enabling, implement RPCs with these non-negotiable requirements:
@@ -26,12 +26,12 @@ Before enabling, implement RPCs with these non-negotiable requirements:
 6. Add idempotency keys for create/reply, rate limits, CSRF/origin controls,
    retention policy and attachment handling before public launch.
 7. Verify a source of truth for `staff` vs `admin` vs `super_admin` roles:
-   the current `getCurrentCoach()` exposes only `is_staff`. Until mapped,
-   fine-grained management permissions cannot be enforced.
+   `getCurrentCoach()` now loads persisted `admin_role` (`coach`, `staff`, `admin`).
+   Confirm the staging schema and deployed migration expose the same column.
 8. Verify staging schema and all migrations with Shaun; do not run on production.
 9. Test cross-coach isolation, forged IDs, staff privilege escalation,
    safeguarding separation, internal-note leakage, concurrent assignment,
    duplicate submission, and revoked group membership.
 10. Wire UI forms only after the RPCs and tests pass.
 
-The draft PR remains unmerged. Production feature flag must remain unset/false.
+The draft PR remains unmerged; role and navigation fixes are committed, but branch conflicts, staging verification, and security tests remain. Production feature flag must remain unset/false.
