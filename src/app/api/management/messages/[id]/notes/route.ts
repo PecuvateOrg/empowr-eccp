@@ -4,7 +4,7 @@ import { getDb } from "@/lib/supabase";
 import { actorForWrite, fail, messageBody, ordinaryConversation, uuid } from "@/lib/messaging-write";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
- const auth = await actorForWrite();
+ const auth = await actorForWrite(request);
  if (auth.error) return auth.error;
  if (!can(auth.actor!, "view_management")) return fail("Staff access required", 403);
  const { id } = await context.params;
