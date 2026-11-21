@@ -12,10 +12,9 @@ function formatDate(iso: string): string {
   });
 }
 
-const shortcuts = [
+const complianceTools = [
   { title: "Coach onboarding", description: "Review onboarding stages and requirements.", href: "/management/onboarding-preview", action: "Open onboarding example" },
-  { title: "Compliance & reminders", description: "Review outstanding requirements and draft reminders.", href: "/management/compliance-preview", action: "Open compliance example" },
-  { title: "Coach grading", description: "Explore Head Coach, Assistant Coach and Junior Assistant Coach grades.", href: "/management/grading-preview", action: "Open grading example" },
+  { title: "Safeguarding & training", description: "Review outstanding requirements, deadlines and draft reminders.", href: "/management/compliance-preview", action: "Open compliance example" },
 ];
 
 export default async function ManagementPage() {
@@ -46,15 +45,21 @@ export default async function ManagementPage() {
       <p className="mt-2 text-xs text-muted">These figures use the existing coach roster and assessment records. They are not onboarding or compliance clearance totals.</p>
 
       <section className="mt-9" aria-labelledby="management-tools">
-        <h2 id="management-tools" className="text-xl font-bold">Management tools</h2>
-        <p className="mt-1 text-sm text-muted">Explore the new features. These three sections currently use fictional example data.</p>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          {shortcuts.map(item => <Link key={item.href} href={item.href} className="flex flex-col rounded-xl border border-border bg-card p-5 hover:border-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue">
+        <h2 id="management-tools" className="text-xl font-bold">Training &amp; Compliance</h2>
+        <p className="mt-1 text-sm text-muted">Coach onboarding, safeguarding, training, deadlines and reminders in one place. These tools currently use fictional example data.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {complianceTools.map(item => <Link key={item.href} href={item.href} className="flex flex-col rounded-xl border border-border bg-card p-5 hover:border-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue">
             <h3 className="font-bold text-ink">{item.title}</h3>
             <p className="mt-2 flex-1 text-sm text-muted">{item.description}</p>
             <span className="mt-4 text-sm font-semibold text-blue">{item.action} →</span>
             <span className="mt-2 text-xs text-muted">Example only — no live changes</span>
           </Link>)}
+        </div>
+        <div className="mt-5 rounded-xl border border-border bg-card p-5">
+          <h3 className="font-bold text-ink">Coach grading</h3>
+          <p className="mt-2 text-sm text-muted">Explore coaching grades separately from onboarding and compliance.</p>
+          <Link href="/management/grading-preview" className="mt-3 inline-block text-sm font-semibold text-blue">Open grading example →</Link>
+          <p className="mt-2 text-xs text-muted">Example only — no live changes</p>
         </div>
       </section>
 
