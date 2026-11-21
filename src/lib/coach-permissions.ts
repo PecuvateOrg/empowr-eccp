@@ -14,6 +14,7 @@ export type CoachPermission =
   | "review_compliance"
   | "activate_coach"
   | "approve_financial_exception"
+  | "manage_scheduling"
   | "change_roles";
 
 export function hasCoachPermission(
@@ -27,6 +28,7 @@ export function hasCoachPermission(
       return role === "admin" || role === "staff";
     default:
       return false;
+    case "manage_scheduling":
     case "activate_coach":
     case "approve_financial_exception":
     case "change_roles":
