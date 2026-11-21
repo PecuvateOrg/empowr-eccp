@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ComplianceReminderPreview } from "@/components/ComplianceReminderPreview";
 import {
   gradeLabels, requirementKeys, requirementLabels, sampleOnboardingCoaches,
   stageLabels, missingRequirements, type OnboardingStage, type RequirementKey,
@@ -82,6 +83,7 @@ export function ComplianceDashboardPreview() {
                       </li>
                     ))}
                   </ul>
+                  <ComplianceReminderPreview key={coach.id} coachName={coach.name} requirements={requirementKeys.filter(key => coach.requirements[key] === "pending").map(key => requirementLabels[key])} />
                   <p className="mt-4 text-xs text-muted">Only authorized staff will verify real requirements. Final coach activation is reserved for the founder after secure integration.</p>
                   <button type="button" disabled className="mt-3 rounded-lg bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-600">
                     Verify / activate — unavailable in example
