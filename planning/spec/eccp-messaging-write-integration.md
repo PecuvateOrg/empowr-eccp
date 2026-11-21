@@ -25,7 +25,7 @@ Before enabling, implement RPCs with these non-negotiable requirements:
    actor's assignment permission, then audit old/new assignee and status.
 6. Idempotency keys and per-actor rate limits are drafted in SQL and wired into write routes,
    but remain untested in staging. Verify retries, concurrency and quota enforcement.
-   Same-origin write checks are now in place but need integration testing with the deployed proxy/origin configuration. Retention policy and attachment handling remain blockers.
+   Same-origin write checks are now in place but need integration testing with the deployed proxy/origin configuration. Attachment uploads are explicitly unsupported in Phase 1 (JSON text-only guard); future uploads require separate scanning, storage permissions, and retention review. Retention policy approval remains a blocker.
 7. Verify a source of truth for `staff` vs `admin` vs `super_admin` roles:
    `getCurrentCoach()` now loads persisted `admin_role` (`coach`, `staff`, `admin`).
    Confirm the staging schema and deployed migration expose the same column.
@@ -35,4 +35,15 @@ Before enabling, implement RPCs with these non-negotiable requirements:
    duplicate submission, and revoked group membership.
 10. Wire UI forms only after the RPCs and tests pass.
 
-The draft PR remains unmerged; role and navigation fixes are committed, but branch conflicts, staging verification, and security tests remain. Production feature flag must remain unset/false.
+The draft PR remains unmerged; role and navigation fixes are committed, but staging verification and security tests remain. Production feature flag must remain unset/false.
+
+## Retention and attachments — proposed policy, approval required
+
+- **Phase 1:** text-only conversations and internal notes. Reject multipart uploads and attachment-related fields. Do not store file blobs, remote file URLs, or base64 media as supported attachment types.
+- **Routine conversations:** propose retaining messages, assignment history, and staff notes for **24 months after resolution**, then deleting them through an audited, separately approved retention job. This is a proposed period, not an approved or implemented deletion schedule.
+- **Safeguarding:** exclude from routine automated deletion. A designated safeguarding lead must approve a separate statutory/contractual retention schedule and access protocol before any safeguarding messaging is enabled. Do not infer a universal statutory retention period.
+- **Open cases, complaints, disputes, or legal holds:** suspend deletion until the relevant authorised owner approves release.
+- **Backups and audit events:** document backup expiry, audit retention, and secure erasure before activating any purge job. A production purge must never run from this draft.
+- **Future attachments:** require malware scanning, private storage, per-message authorization, download audit, file size/type restrictions, and deletion coverage before enabling.
+
+**Approval gate:** confirm the retention periods and safeguards with Empowr's data-protection/safeguarding owners before implementing automated deletion or enabling the feature.
