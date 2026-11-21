@@ -10,6 +10,14 @@ async function jsonOrError(response:Response) {
  if (!response.ok) throw new Error(result.error || "Request failed. Please try again.");
  return result;
 }
+async function fetchThreads():Promise<Thread[]> {
+ const data=await jsonOrError(await fetch("/api/management/messages",{cache:"no-store"})) as {conversations?:Thread[]};
+ return data.conversations??[];
+}
+async function fetchEntries(id:string):Promise<Entry[]> {
+ const data=await jsonOrError(await fetch(`/api/management/messages/${id}/history`,{cache:"no-store"})) as {messages?:Entry[]};
+ return data.messages??[];
+}
 export function StaffMessaging({ canManage }: { canManage:boolean }) {
  const [threads,setThreads]=useState<Thread[]>([]);
  const [selected,setSelected]=useState<string|null>(null);
@@ -25,21 +33,31 @@ export function StaffMessaging({ canManage }: { canManage:boolean }) {
  const current=threads.find(t=>t.id===selected);
  const refresh=useCallback(async()=>{
   try {
-   const r=await fetch("/api/management/messages",{cache:"no-store"});
-   const data=await jsonOrError(r) as {conversations?:Thread[]};
-   setThreads(data.conversations??[]);setError("");
+   setThreads(await fetchThreads());setError("");
   }catch(e){setError(e instanceof Error?e.message:"Inbox unavailable");}
   finally{setLoading(false);}
  },[]);
  const loadEntries=useCallback(async(id:string)=>{
   try {
-   const r=await fetch(`/api/management/messages/${id}/history`,{cache:"no-store"});
-   const data=await jsonOrError(r) as {messages?:Entry[]};
-   setEntries(data.messages??[]);setError("");
+   setEntries(await fetchEntries(id));setError("");
   }catch(e){setError(e instanceof Error?e.message:"Unable to load conversation");setEntries([]);}
  },[]);
- useEffect(()=>{void Promise.resolve().then(refresh);},[refresh]);
- useEffect(()=>{if(selected){void Promise.resolve().then(()=>loadEntries(selected));}},[selected,loadEntries]);
+ // Effects set state only in promise callbacks (react-hooks/set-state-in-effect);
+ // `live` drops results that arrive after the selection changed or unmount.
+ useEffect(()=>{
+  let live=true;
+  fetchThreads()
+   .then(items=>{if(live){setThreads(items);setError("");}},e=>{if(live)setError(e instanceof Error?e.message:"Inbox unavailable");})
+   .finally(()=>{if(live)setLoading(false);});
+  return ()=>{live=false;};
+ },[]);
+ useEffect(()=>{
+  if(!selected)return;
+  let live=true;
+  fetchEntries(selected)
+   .then(items=>{if(live){setEntries(items);setError("");}},e=>{if(live){setError(e instanceof Error?e.message:"Unable to load conversation");setEntries([]);}});
+  return ()=>{live=false;};
+ },[selected]);
  async function submit(e:FormEvent<HTMLFormElement>){
   e.preventDefault();if(!selected||!message.trim()||sending)return;
   setSending(true);setError("");setSuccess("");

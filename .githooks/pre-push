@@ -1,0 +1,10 @@
+#!/bin/sh
+# Runs the same checks as the GitHub "verify" job before anything is pushed, so a
+# red branch never reaches GitHub. Installed by `pnpm install` (the `prepare`
+# script sets core.hooksPath). Skip once, deliberately: git push --no-verify
+cd "$(git rev-parse --show-toplevel)/src" || exit 1
+echo "pre-push: lint, typecheck, tests (pnpm verify runs the build too)"
+pnpm lint && pnpm typecheck && pnpm test || {
+  echo "pre-push: checks failed — fix them before pushing." >&2
+  exit 1
+}

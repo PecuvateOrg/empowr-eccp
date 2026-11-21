@@ -12,6 +12,13 @@ const categories = [
  { value: "other", label: "Other" },
 ];
 
+async function fetchConversations(): Promise<Conversation[]> {
+ const response = await fetch("/api/messages", { cache: "no-store" });
+ if (!response.ok) throw new Error("Unable to load your conversations.");
+ const result = await response.json() as { conversations?: Conversation[] };
+ return result.conversations ?? [];
+}
+
 export function CoachMessaging() {
  const [conversations, setConversations] = useState<Conversation[]>([]);
  const [loading, setLoading] = useState(true);
@@ -26,17 +33,23 @@ export function CoachMessaging() {
 
  const refresh = useCallback(async () => {
   try {
-   const response = await fetch("/api/messages", { cache: "no-store" });
-   if (!response.ok) throw new Error("Unable to load your conversations.");
-   const result = await response.json() as { conversations?: Conversation[] };
-   setConversations(result.conversations ?? []);
+   setConversations(await fetchConversations());
    setListError("");
   } catch {
    setListError("Unable to load conversations. Please try again.");
   } finally { setLoading(false); }
  }, []);
 
- useEffect(() => {\n  void Promise.resolve().then(refresh);\n }, [refresh]);
+ // Initial load: state is set only in the promise callbacks, never synchronously
+ // in the effect (react-hooks/set-state-in-effect). `live` drops late results.
+ useEffect(() => {
+  let live = true;
+  fetchConversations()
+   .then(items => { if (live) { setConversations(items); setListError(""); } },
+    () => { if (live) setListError("Unable to load conversations. Please try again."); })
+   .finally(() => { if (live) setLoading(false); });
+  return () => { live = false; };
+ }, []);
 
  async function submit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
