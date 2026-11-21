@@ -44,3 +44,25 @@ export function toCoachEntry(
   const mine = entry.author_id === coachId;
   return { id: entry.id, mine, author: mine ? "You" : "ECCP staff team", body: entry.body, createdAt: entry.created_at };
 }
+
+// Staff-facing wording (staff see "Waiting for coach", coaches "Waiting for you").
+export function staffStatusLabel(status: string): string {
+  return status === "waiting_for_coach" ? "Waiting for coach" : coachStatusLabel(status);
+}
+export function priorityLabel(priority: string): string {
+  return ({ low: "Low", medium: "Medium", high: "High", urgent: "Urgent" } as Record<string, string>)[priority] ?? "Medium";
+}
+
+// An enquiry waits for staff when it's open and the newest public message is
+// from a coach. Waiting enquiries sort first, oldest wait first; the rest follow
+// by most recent activity.
+export type QueueItem = { status: string; updatedAt: string; lastPublicByCoach: boolean; lastPublicAt: string | null };
+export function waitingForStaff(item: QueueItem): boolean {
+  return item.status !== "resolved" && item.lastPublicByCoach;
+}
+export function staffQueueOrder(a: QueueItem, b: QueueItem): number {
+  const wa = waitingForStaff(a), wb = waitingForStaff(b);
+  if (wa !== wb) return wa ? -1 : 1;
+  if (wa) return Date.parse(a.lastPublicAt ?? a.updatedAt) - Date.parse(b.lastPublicAt ?? b.updatedAt);
+  return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
+}

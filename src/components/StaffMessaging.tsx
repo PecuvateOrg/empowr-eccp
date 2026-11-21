@@ -1,18 +1,20 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { categoryLabel, priorityLabel, staffStatusLabel } from "@/lib/coach-messages-view";
 
-type Thread = { id:string; title:string; category:string; status:string; priority:string; assigned_staff_id:string|null; updated_at:string };
-type Entry = { id:string; author_id:string; body:string; internal_note:boolean; created_at:string };
+type Thread = { id:string; title:string; category:string; status:string; priority:string; coachName:string; assigneeId:string|null; assigneeName:string|null; updatedAt:string; waitingForStaff:boolean };
+type Staff = { id:string; name:string };
+type Entry = { id:string; authorName:string; fromCoach:boolean; body:string; internalNote:boolean; createdAt:string };
 type ApiError = { error?:string };
 async function jsonOrError(response:Response) {
  const result = await response.json().catch(() => ({})) as ApiError;
  if (!response.ok) throw new Error(result.error || "Request failed. Please try again.");
  return result;
 }
-async function fetchThreads():Promise<Thread[]> {
- const data=await jsonOrError(await fetch("/api/management/messages",{cache:"no-store"})) as {conversations?:Thread[]};
- return data.conversations??[];
+async function fetchQueue():Promise<{threads:Thread[];staff:Staff[]}> {
+ const data=await jsonOrError(await fetch("/api/management/messages",{cache:"no-store"})) as {conversations?:Thread[];staff?:Staff[]};
+ return {threads:data.conversations??[],staff:data.staff??[]};
 }
 async function fetchEntries(id:string):Promise<Entry[]> {
  const data=await jsonOrError(await fetch(`/api/management/messages/${id}/history`,{cache:"no-store"})) as {messages?:Entry[]};
@@ -20,6 +22,7 @@ async function fetchEntries(id:string):Promise<Entry[]> {
 }
 export function StaffMessaging({ canManage }: { canManage:boolean }) {
  const [threads,setThreads]=useState<Thread[]>([]);
+ const [staff,setStaff]=useState<Staff[]>([]);
  const [selected,setSelected]=useState<string|null>(null);
  const [entries,setEntries]=useState<Entry[]>([]);
  const [loading,setLoading]=useState(true);
@@ -33,7 +36,7 @@ export function StaffMessaging({ canManage }: { canManage:boolean }) {
  const current=threads.find(t=>t.id===selected);
  const refresh=useCallback(async()=>{
   try {
-   setThreads(await fetchThreads());setError("");
+   {const q=await fetchQueue();setThreads(q.threads);setStaff(q.staff);}setError("");
   }catch(e){setError(e instanceof Error?e.message:"Inbox unavailable");}
   finally{setLoading(false);}
  },[]);
@@ -46,8 +49,8 @@ export function StaffMessaging({ canManage }: { canManage:boolean }) {
  // `live` drops results that arrive after the selection changed or unmount.
  useEffect(()=>{
   let live=true;
-  fetchThreads()
-   .then(items=>{if(live){setThreads(items);setError("");}},e=>{if(live)setError(e instanceof Error?e.message:"Inbox unavailable");})
+  fetchQueue()
+   .then(q=>{if(live){setThreads(q.threads);setStaff(q.staff);setError("");}},e=>{if(live)setError(e instanceof Error?e.message:"Inbox unavailable");})
    .finally(()=>{if(live)setLoading(false);});
   return ()=>{live=false;};
  },[]);
@@ -70,7 +73,7 @@ export function StaffMessaging({ canManage }: { canManage:boolean }) {
   }catch(e){setError(e instanceof Error?e.message:"Unable to send");}
   finally{setSending(false);}
  }
- async function update(field:"priority"|"status",value:string){
+ async function update(field:"priority"|"status"|"assigneeId",value:string|null){
   if(!selected||!canManage)return;
   setSaving(true);setError("");setSuccess("");
   try{
@@ -84,21 +87,25 @@ export function StaffMessaging({ canManage }: { canManage:boolean }) {
    <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-bold">Conversations</h2><button type="button" onClick={()=>void refresh()} className="text-sm font-bold text-blue underline">Refresh</button></div>
    {loading?<p role="status" className="mt-4 text-sm">Loading inbox…</p>:threads.length===0?<p className="mt-4 text-sm text-muted">No coach enquiries yet.</p>:
    <ul className="mt-4 space-y-2">{threads.map(t=><li key={t.id}><button type="button" onClick={()=>{setSelected(t.id);setEntries([]);setMessage("");pendingKey.current=null;setSuccess("");}} aria-current={selected===t.id?"true":undefined} className={`w-full rounded-xl border p-3 text-left ${selected===t.id?"border-blue bg-blue-pale":"border-border hover:bg-cream"}`}>
-    <span className="block font-bold">{t.title}</span><span className="mt-1 block text-xs text-muted">{t.category} · {t.status} · {t.priority}</span>
+    <span className="flex items-start justify-between gap-2"><span className="block break-words font-bold">{t.title}</span>{t.waitingForStaff&&<span className="shrink-0 rounded-full bg-red-dark px-2 py-0.5 text-xs font-bold text-white">Waiting for staff</span>}</span>
+    <span className="mt-1 block text-xs text-muted">{t.coachName} · {categoryLabel(t.category)} · {staffStatusLabel(t.status)} · {priorityLabel(t.priority)}</span>
+    <span className="block text-xs text-muted">{t.assigneeName?`Assigned to ${t.assigneeName}`:"Unassigned"}</span>
    </button></li>)}</ul>}
   </div>
   <div className="rounded-2xl border border-border bg-card p-5">
    {!current?<p className="text-sm text-muted">Select an enquiry to read and respond.</p>:<>
     <h2 className="text-xl font-bold">{current.title}</h2>
-    <p className="mt-1 text-sm text-muted">{current.category} · {current.status}</p>
+    <p className="mt-1 text-sm text-muted">From {current.coachName} · {categoryLabel(current.category)} · {staffStatusLabel(current.status)} · {current.assigneeName?`Assigned to ${current.assigneeName}`:"Unassigned"}</p>
     {canManage&&<div className="mt-4 grid grid-cols-2 gap-3">
-     <label className="text-sm font-bold">Priority<select disabled={saving} value={current.priority} onChange={e=>void update("priority",e.target.value)} className="mt-1 w-full rounded-lg border border-border p-2">{["low","medium","high","urgent"].map(v=><option key={v} value={v}>{v}</option>)}</select></label>
-     <label className="text-sm font-bold">Status<select disabled={saving} value={current.status} onChange={e=>void update("status",e.target.value)} className="mt-1 w-full rounded-lg border border-border p-2">{["new","in_progress","waiting_for_coach","resolved"].map(v=><option key={v} value={v}>{v.replaceAll("_"," ")}</option>)}</select></label>
+     <label className="text-sm font-bold">Priority<select disabled={saving} value={current.priority} onChange={e=>void update("priority",e.target.value)} className="mt-1 w-full rounded-lg border border-border p-2">{["low","medium","high","urgent"].map(v=><option key={v} value={v}>{priorityLabel(v)}</option>)}</select></label>
+     <label className="text-sm font-bold">Status<select disabled={saving} value={current.status} onChange={e=>void update("status",e.target.value)} className="mt-1 w-full rounded-lg border border-border p-2">{["new","in_progress","waiting_for_coach","resolved"].map(v=><option key={v} value={v}>{staffStatusLabel(v)}</option>)}</select></label>
+     <label className="col-span-2 text-sm font-bold">Assigned to<select disabled={saving} value={current.assigneeId??""} onChange={e=>void update("assigneeId",e.target.value||null)} className="mt-1 w-full rounded-lg border border-border p-2"><option value="">Unassigned</option>{staff.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
     </div>}
     <div className="mt-5 max-h-96 space-y-3 overflow-y-auto rounded-xl bg-cream p-3" aria-label="Conversation history">
-     {entries.length===0?<p className="text-sm text-muted">No messages to display.</p>:entries.map(entry=><article key={entry.id} className={`rounded-lg border p-3 ${entry.internal_note?"border-amber-300 bg-amber-50":"border-border bg-white"}`}>
-      {entry.internal_note&&<p className="text-xs font-black uppercase">Internal staff note — not visible to coaches</p>}
-      <p className="whitespace-pre-wrap break-words text-sm">{entry.body}</p><p className="mt-2 text-xs text-muted">{new Date(entry.created_at).toLocaleString("en-GB")}</p>
+     {entries.length===0?<p className="text-sm text-muted">No messages to display.</p>:entries.map(entry=><article key={entry.id} className={`rounded-lg border p-3 ${entry.internalNote?"border-amber-300 bg-amber-50":entry.fromCoach?"border-border bg-white":"border-blue/30 bg-blue/5"}`}>
+      {entry.internalNote&&<p className="text-xs font-black uppercase">Internal staff note — not visible to coaches</p>}
+      <p className="text-xs font-bold text-muted">{entry.authorName}{entry.fromCoach?" (coach)":" (staff)"}</p>
+      <p className="whitespace-pre-wrap break-words text-sm">{entry.body}</p><p className="mt-2 text-xs text-muted">{new Date(entry.createdAt).toLocaleString("en-GB",{timeZone:"Europe/London",dateStyle:"medium",timeStyle:"short"})}</p>
      </article>)}
     </div>
     <form onSubmit={submit} className="mt-5 space-y-3">
