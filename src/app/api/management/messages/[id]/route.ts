@@ -8,7 +8,7 @@ const statuses = ["new","in_progress","waiting_for_coach","resolved"];
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
  const auth = await actorForWrite();
  if (auth.error) return auth.error;
- if (!can(auth.actor!, "view_management")) return fail("Staff access required", 403);
+ if (!can(auth.actor!, "change_roles")) return fail("Staff access required", 403);
  const { id } = await context.params;
  if (!uuid(id)) return fail("Invalid conversation", 400);
  const found = await ordinaryConversation(id);
