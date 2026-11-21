@@ -21,10 +21,16 @@ test("internal notes are hidden from coaches and group members", () => {
  assert.equal(canWriteInternalNote("staff-a", "staff", inbox), true);
  assert.equal(canWriteInternalNote("staff-a", "staff", group), false);
 });
-test("safeguarding access requires explicit designation even for founder", () => {
+test("safeguarding access requires explicit designation even for admin", () => {
  assert.equal(canReadConversation("coach-a", "coach", safeguarding), false);
- assert.equal(canReadConversation("founder", "founder", safeguarding), false);
+ assert.equal(canReadConversation("admin-a", "admin", safeguarding), false);
  assert.equal(canReadConversation("safeguarding-lead", "staff", safeguarding), true);
- assert.equal(canManageConversation("super_admin", "safeguarding", false), false);
+ assert.equal(canManageConversation("admin", "safeguarding", false), false);
  assert.equal(canManageConversation("staff", "safeguarding", true), true);
+});
+
+test("unknown roles cannot gain staff inbox access", () => {
+ assert.equal(canReadConversation("unknown", "founder" as never, inbox), false);
+ assert.equal(canManageConversation("super_admin" as never, "staff_inbox", false), false);
+ assert.equal(canWriteInternalNote("unknown", "founder" as never, inbox), false);
 });
