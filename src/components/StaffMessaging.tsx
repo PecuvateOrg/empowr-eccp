@@ -38,8 +38,8 @@ export function StaffMessaging({ canManage }: { canManage:boolean }) {
    setEntries(data.messages??[]);setError("");
   }catch(e){setError(e instanceof Error?e.message:"Unable to load conversation");setEntries([]);}
  },[]);
- useEffect(()=>{const start=()=>{void refresh();};start();},[refresh]);
- useEffect(()=>{if(selected){void loadEntries(selected);}},[selected,loadEntries]);
+ useEffect(()=>{void Promise.resolve().then(refresh);},[refresh]);
+ useEffect(()=>{if(selected){void Promise.resolve().then(()=>loadEntries(selected));}},[selected,loadEntries]);
  async function submit(e:FormEvent<HTMLFormElement>){
   e.preventDefault();if(!selected||!message.trim()||sending)return;
   setSending(true);setError("");setSuccess("");
