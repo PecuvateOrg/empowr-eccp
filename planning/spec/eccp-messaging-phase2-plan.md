@@ -1,6 +1,6 @@
 # ECCP messaging phase 2: coach conversation view and staff alerts
 
-**Status:** plan, 2026-11-21; owner accepted all five recommendations the same day. Not built. `ECCP_MESSAGING_ENABLED` stays off until stage 4 passes.
+**Status:** DONE 2026-11-21. Stages 1-3 shipped (#59-#62), switched on (#63), verified live (#66; results in `eccp-messaging-staging-verification.md`). Stage 4 step 1 (`run-with-secrets.sh` handing apps the vault URL) was fixed in `_config` 8a7ea3c and checked: the app now gets the empowr-cic project. Plan accepted by the owner 2026-11-21.
 
 ## Where phase 1 left off
 
