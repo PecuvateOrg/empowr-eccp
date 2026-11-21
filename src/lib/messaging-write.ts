@@ -7,7 +7,19 @@ export const messagingDisabled = () => process.env.ECCP_MESSAGING_ENABLED !== "t
 export const fail = (message: string, status: number) => NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 export const uuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 export const messageBody = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0 && value.length <= 10000;
-export async function actorForWrite() {
+/** Reject cross-site and origin-less cookie-authenticated writes. */
+export function trustedMessagingOrigin(request: Request): boolean {
+ const origin = request.headers.get("origin");
+ const fetchSite = request.headers.get("sec-fetch-site");
+ if (!origin || origin === "null" || fetchSite === "cross-site") return false;
+ try {
+  const expected = process.env.ECCP_APP_ORIGIN || new URL(request.url).origin;
+  return new URL(origin).origin === new URL(expected).origin;
+ } catch { return false; }
+}
+export async function actorForWrite(request: Request) {
+ if (!trustedMessagingOrigin(request)) return { error: fail("Invalid request origin", 403) };
+
  const actor = await getCurrentCoach();
  if (!actor) return { error: fail("Authentication required", 401) };
  if (messagingDisabled()) return { error: fail("Messaging is not enabled", 503) };
