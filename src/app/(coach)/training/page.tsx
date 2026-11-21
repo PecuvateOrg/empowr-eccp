@@ -18,6 +18,11 @@ export default async function MyTrainingPage() {
   <h1 className="mt-5 text-3xl font-bold text-ink">My Training &amp; Compliance</h1>
   <p className="mt-2 max-w-2xl text-muted">Your Empowr coaching courses, certificates and compliance requirements in one place.</p>
   <section className="mt-8 rounded-2xl border border-border bg-card p-6">
+   <h2 className="text-xl font-bold text-ink">Coach Onboarding — Coming Soon</h2>
+   <p className="mt-3 text-sm text-muted">We’re preparing a new way for you to follow your coaching journey. In the meantime, you can explore an example of what your onboarding progress will look like.</p>
+   <Link href="/onboarding-preview" className="mt-4 inline-flex rounded-full border border-blue px-5 py-3 text-sm font-bold text-blue-dark hover:bg-blue-pale">See an Example</Link>
+  </section>
+  <section className="mt-8 rounded-2xl border border-border bg-card p-6">
    <div className="flex flex-wrap items-center justify-between gap-3">
     <h2 className="text-xl font-bold text-ink">Safeguarding for Roller Skating Coaches</h2>
     <span className="rounded-full bg-blue-pale px-3 py-1 text-sm font-bold text-blue-dark">{status}</span>
