@@ -11,9 +11,9 @@ export default async function CoachOnboardingPreviewPage() {
   return (
     <main className="mx-auto w-full max-w-2xl py-10">
       <Link href="/profile" className="text-sm font-semibold text-blue underline">Back to my profile</Link>
-      <h1 className="mt-6 text-3xl font-bold">My onboarding — example</h1>
+      <h1 className="mt-6 text-3xl font-bold">Coach onboarding — coming soon</h1>
       <p role="note" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
-        DEMONSTRATION ONLY. This fictional coach is not your account. No live onboarding information, compliance evidence or activation status is shown.
+        Here’s an example of what your onboarding journey could look like. This is fictional information, not your own onboarding or compliance status.
       </p>
       <section className="mt-6 rounded-xl border border-border bg-card p-5">
         <h2 className="text-lg font-bold">Example onboarding progress</h2>
