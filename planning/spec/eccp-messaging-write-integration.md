@@ -25,7 +25,7 @@ Before enabling, implement RPCs with these non-negotiable requirements:
    actor's assignment permission, then audit old/new assignee and status.
 6. Idempotency keys and per-actor rate limits are drafted in SQL and wired into write routes,
    but remain untested in staging. Verify retries, concurrency and quota enforcement.
-   CSRF/origin controls, retention policy and attachment handling remain blockers.
+   Same-origin write checks are now in place but need integration testing with the deployed proxy/origin configuration. Retention policy and attachment handling remain blockers.
 7. Verify a source of truth for `staff` vs `admin` vs `super_admin` roles:
    `getCurrentCoach()` now loads persisted `admin_role` (`coach`, `staff`, `admin`).
    Confirm the staging schema and deployed migration expose the same column.
