@@ -3,8 +3,11 @@
 # red branch never reaches GitHub. Installed by `pnpm install` (the `prepare`
 # script sets core.hooksPath). Skip once, deliberately: git push --no-verify
 cd "$(git rev-parse --show-toplevel)/src" || exit 1
+# Use pnpm if it is on PATH, otherwise corepack's copy (the README's setup only
+# installs corepack, and a bare `pnpm` there blocked every push).
+if command -v pnpm >/dev/null 2>&1; then PNPM="pnpm"; else PNPM="corepack pnpm"; fi
 echo "pre-push: lint, typecheck, tests (pnpm verify runs the build too)"
-pnpm lint && pnpm typecheck && pnpm test || {
+$PNPM lint && $PNPM typecheck && $PNPM test || {
   echo "pre-push: checks failed — fix them before pushing." >&2
   exit 1
 }
