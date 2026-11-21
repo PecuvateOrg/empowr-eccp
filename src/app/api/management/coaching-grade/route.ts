@@ -1,29 +1,30 @@
 import { NextResponse } from "next/server";
 import { can, getCurrentCoach } from "@/lib/auth";
 import { getDb } from "@/lib/supabase";
-import { isCoachingGrade } from "@/lib/coaching-grade";
+import { coachingGradeEnabled, parseGradeRequest } from "@/lib/coaching-grade";
 
+// Admin-only. The grade change and its audit row are one transaction inside
+// eccp.set_coaching_grade, which also re-checks the actor and target.
 export async function PATCH(request: Request) {
- const actor = await getCurrentCoach();
- if (!actor) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
- if (!can(actor, "change_roles")) return NextResponse.json({ error: "Not authorised" }, { status: 403 });
- const body = await request.json().catch(() => null);
- const coachId = body?.coachId;
- const grade = body?.grade;
- if (typeof coachId !== "string" || !/^[0-9a-f]{8}-[0-9a-f-]{27,36}$/i.test(coachId) || !(grade === null || isCoachingGrade(grade))) {
-  return NextResponse.json({ error: "Invalid coach or coaching grade" }, { status: 400 });
- }
- const db = getDb();
- const { data: existing, error: readError } = await db.from("coaches").select("id, coaching_grade").eq("id", coachId).maybeSingle();
- if (readError) return NextResponse.json({ error: "Coaching grade storage is not ready" }, { status: 503 });
- if (!existing) return NextResponse.json({ error: "Coach not found" }, { status: 404 });
- if (existing.coaching_grade === grade) return NextResponse.json({ grade });
- const { error: updateError } = await db.from("coaches").update({ coaching_grade: grade }).eq("id", coachId).eq("coaching_grade", existing.coaching_grade ?? null);
- if (updateError) return NextResponse.json({ error: "Unable to update coaching grade" }, { status: 500 });
- const { error: auditError } = await db.from("coaching_grade_audit").insert({ coach_id: coachId, changed_by: actor.id, previous_grade: existing.coaching_grade, new_grade: grade });
- if (auditError) {
-  console.error("[coaching-grade] audit failed", auditError);
-  return NextResponse.json({ error: "Grade changed but audit recording failed; contact an administrator" }, { status: 500 });
- }
- return NextResponse.json({ grade });
+  if (!coachingGradeEnabled()) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const actor = await getCurrentCoach();
+  if (!actor) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  if (!can(actor, "change_roles")) return NextResponse.json({ error: "Not authorised" }, { status: 403 });
+
+  const parsed = parseGradeRequest(await request.json().catch(() => null));
+  if (!parsed) return NextResponse.json({ error: "Invalid coach or coaching grade" }, { status: 400 });
+
+  const { error } = await getDb().rpc("set_coaching_grade", {
+    p_actor_id: actor.id,
+    p_coach_id: parsed.coachId,
+    p_grade: parsed.grade,
+  });
+  if (error) {
+    if (error.code === "ECCP1") return NextResponse.json({ error: "Not authorised" }, { status: 403 });
+    if (error.code === "ECCP2") return NextResponse.json({ error: "Coach not found" }, { status: 404 });
+    if (error.code === "ECCP3") return NextResponse.json({ error: "Invalid coaching grade" }, { status: 400 });
+    console.error("[coaching-grade] update failed", error.code, error.message);
+    return NextResponse.json({ error: "Unable to update coaching grade" }, { status: 500 });
+  }
+  return NextResponse.json({ grade: parsed.grade });
 }
