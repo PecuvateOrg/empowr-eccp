@@ -21,26 +21,31 @@ The web platform for the Empowr Certified Coaching Programme, supporting the pat
 
 ## Setup
 
-Run commands from `src/`:
+You need Node 22 or later (CI uses 22) and corepack, which comes with Node. You don't need secrets or a `.env` file to install, run the checks or build. Run commands from `src/`:
 
 ```sh
-corepack pnpm install
-corepack pnpm dev
+corepack enable          # once per machine; after this, plain `pnpm` works
+pnpm install             # also turns on the pre-push hook (.githooks/pre-push)
+pnpm dev
 ```
 
-## Quality Checks
+If you can't run `corepack enable` (no admin rights), put `corepack` in front of each command instead, e.g. `corepack pnpm install`.
+
+## Before you push
 
 ```sh
-corepack pnpm lint
-corepack pnpm typecheck
-corepack pnpm build
+pnpm verify              # lint, typecheck, tests, build: the same as the GitHub "verify" check
 ```
 
-## Environment Variables
+Push only when it passes. The pre-push hook runs lint, typecheck and tests automatically. `pnpm verify` also runs the build. A branch that fails `verify` can't merge.
 
-No runtime environment variables are required by the initial scaffold. Add variable names to `src/.env.example` before introducing an integration.
+If you are working somewhere that can't run commands (a web-only agent, for example), push to your branch and open a **draft** PR. GitHub runs `verify` on it within about two minutes. Fix until it is green, then mark the PR ready.
 
-Copy `.env.example` to `.env.local` when environment variables are introduced. Never commit `.env.local`.
+Tests live next to the code as `lib/*.test.ts` and run with `pnpm test`.
+
+## Environment variables
+
+Every variable is listed by name in `src/.env.example`. For local runs, copy it to `.env.local` and fill in only what you need; never commit `.env.local`. Production values live in AWS SSM, managed by the maintainer. Ask for a change rather than adding values yourself.
 
 ## Deployment
 
