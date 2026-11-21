@@ -1,3 +1,4 @@
+import { can } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/supabase";
 import { actorForWrite, fail, ordinaryConversation, uuid } from "@/lib/messaging-write";
@@ -7,7 +8,7 @@ const statuses = ["new","in_progress","waiting_for_coach","resolved"];
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
  const auth = await actorForWrite();
  if (auth.error) return auth.error;
- if (!auth.actor!.is_staff) return fail("Staff access required", 403);
+ if (!can(auth.actor!, "view_management")) return fail("Staff access required", 403);
  const { id } = await context.params;
  if (!uuid(id)) return fail("Invalid conversation", 400);
  const found = await ordinaryConversation(id);
