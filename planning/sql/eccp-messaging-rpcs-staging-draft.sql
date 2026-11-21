@@ -1,14 +1,14 @@
 -- DRAFT ONLY: staging review required before execution.
 -- These functions use an ECCP session token verified against coach_sessions,
--- not a client-supplied actor ID. Requires verified coaches.role migration.
+-- not a client-supplied actor ID. Requires verified coaches.admin_role migration.
 -- NOTE: service_role has broad privileges: keep the key server-side only.
 create or replace function eccp.message_actor(p_session_token text)
 returns table(actor_id uuid, actor_role text)
 language sql security definer set search_path = eccp, pg_temp as $$
- select c.id, c.role::text
+ select c.id, c.admin_admin_role::text
  from eccp.coach_sessions s join eccp.coaches c on c.id = s.coach_id
  where s.refresh_token = p_session_token and s.expires_at > now()
- and c.role::text in ('coach','staff','admin')
+ and c.admin_admin_role::text in ('coach','staff','admin')
  limit 1
 $$;
 revoke all on function eccp.message_actor(text) from public, anon, authenticated;
@@ -65,7 +65,7 @@ begin
  into v_old from eccp.message_conversations where id=p_conversation_id and kind='staff_inbox' for update;
  if v_old is null then raise exception 'not found'; end if;
  if p_has_assignee and p_assignee_id is not null and not exists
- (select 1 from eccp.coaches where id=p_assignee_id and role::text in ('staff','admin'))
+ (select 1 from eccp.coaches where id=p_assignee_id and admin_role::text in ('staff','admin'))
  then raise exception 'invalid assignee'; end if;
  if p_priority is not null and p_priority not in ('low','medium','high','urgent') then raise exception 'invalid priority'; end if;
  if p_status is not null and p_status not in ('new','in_progress','waiting_for_coach','resolved') then raise exception 'invalid status'; end if;
