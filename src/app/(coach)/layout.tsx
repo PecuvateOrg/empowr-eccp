@@ -3,6 +3,7 @@ import Link from "next/link";
 import { can, getCurrentCoach } from "@/lib/auth";
 import { BrandMark } from "@/components/BrandMark";
 import { SignOutButton } from "@/components/SignOutButton";
+import { coachUnreadCount } from "@/lib/coach-messages";
 
 // This layout IS the access control for every coach page beneath it. There is no
 // middleware: checking a session means a database round-trip, which the edge
@@ -14,6 +15,9 @@ export default async function CoachLayout({
 }) {
   const coach = await getCurrentCoach();
   if (!coach) redirect("/login");
+  const messaging = process.env.ECCP_MESSAGING_ENABLED === "true";
+  // A failed count never blocks the page; the banner just leaves the number out.
+  const unread = messaging ? await coachUnreadCount(coach.id).catch(() => null) : null;
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-5 py-8 sm:px-8">
@@ -25,14 +29,16 @@ export default async function CoachLayout({
               Management
             </Link>
           ) : null}
-          {process.env.ECCP_MESSAGING_ENABLED === "true" ? (<Link className="font-semibold text-blue hover:text-blue-dark" href="/messages">Messages</Link>) : null}
+          {messaging ? (<Link className="font-semibold text-blue hover:text-blue-dark" href="/messages">Messages</Link>) : null}
           <span className="text-muted">{coach.full_name}</span>
           <SignOutButton />
         </div>
       </header>
       <div role="status" className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted">
         <span aria-hidden="true">🔔</span>
-        <span>Team message alerts will appear here when messaging is connected.</span>
+        {!messaging ? <span>Team message alerts will appear here when messaging is connected.</span>
+          : unread ? <Link href="/messages" className="font-semibold text-blue underline">You have {unread} new {unread === 1 ? "reply" : "replies"} from the ECCP staff team</Link>
+          : <span>No new messages.</span>}
       </div>
       {children}
     </div>
