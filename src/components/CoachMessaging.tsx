@@ -36,7 +36,7 @@ export function CoachMessaging() {
   } finally { setLoading(false); }
  }, []);
 
- useEffect(() => { void refresh(); }, [refresh]);
+ useEffect(() => {\n  const start = () => { void refresh(); };\n  start();\n }, [refresh]);
 
  async function submit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
