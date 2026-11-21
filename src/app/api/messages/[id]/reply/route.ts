@@ -1,6 +1,7 @@
 import { can } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/supabase";
+import { notifyCoachesOfReply } from "@/lib/coach-notify";
 import { actorForWrite, fail, messageBody, textOnlyMessagingPayload, ordinaryConversation, uuid, isParticipant, rpcFail } from "@/lib/messaging-write";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -26,5 +27,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
    p_internal_note: false,
  });
  if (error) return rpcFail(error, "Reply unavailable");
+ // A staff reply emails the coach (content-free, at most every 15 minutes).
+ // The reply is already saved; an alert failure is logged, never returned.
+ if (can(actor, "view_management")) {
+  await notifyCoachesOfReply(id, actor.id).catch(e => console.error("[messages] coach alert failed", e));
+ }
  return NextResponse.json({ messageId: data }, { status: 201 });
 }

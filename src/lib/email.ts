@@ -154,3 +154,43 @@ If you weren't expecting this, reply to this email and let us know.`,
 
   console.info(`[email] staff welcome sent to ${email}, resend id ${data?.id}`);
 }
+
+const MESSAGES_URL = "https://eccp.empowrcic.org/messages";
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+// Sent when staff reply to a coach's enquiry. Deliberately content-free: no
+// subject line or message text, so nothing sensitive sits in an inbox or a
+// notification preview. The coach reads the reply after signing in.
+export async function sendCoachReplyEmail(email: string, fullName: string): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error("RESEND_API_KEY not set");
+  const name = escapeHtml(fullName.split(" ")[0] || "there");
+  const { data, error } = await new Resend(apiKey).emails.send({
+    from: FROM,
+    to: email,
+    subject: "You have a new reply from the ECCP staff team",
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:sans-serif;color:#1B1B1B;max-width:480px;margin:0 auto;padding:32px 16px;">
+  <p style="font-size:15px;">Hi ${name},</p>
+  <p style="font-size:15px;">The ECCP staff team has replied to your enquiry. Sign in to read it.</p>
+  <p style="margin:28px 0;"><a href="${MESSAGES_URL}" style="background:#2F5DAA;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700;">Read your messages</a></p>
+  <p style="font-size:13px;color:#6B7280;">For your privacy this email doesn't include the message. Please don't reply to it; reply in ECCP instead.</p>
+  <hr style="border:none;border-top:1px solid #E5E7EB;margin:32px 0;">
+  <p style="font-size:12px;color:#9CA3AF;">Empowr CIC · empowrcic.org</p>
+</body>
+</html>`,
+    text: `Hi ${fullName.split(" ")[0] || "there"},
+
+The ECCP staff team has replied to your enquiry. Sign in to read it:
+${MESSAGES_URL}
+
+For your privacy this email doesn't include the message. Please reply in ECCP, not to this email.
+
+Empowr CIC`,
+  });
+  if (error) throw new Error(`resend rejected the send: ${error.name} — ${error.message}`);
+  console.info(`[email] coach reply alert sent, resend id ${data?.id}`);
+}
