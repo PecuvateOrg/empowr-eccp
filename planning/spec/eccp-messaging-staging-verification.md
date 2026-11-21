@@ -27,5 +27,5 @@
 - Leave messaging feature flag OFF until explicit launch approval.
 
 ## Known issues to resolve before release
-- Idempotency draft currently returns an existing result for the same key without comparing payloads. Add payload-fingerprint checks.
+- Idempotency RPC draft now compares the normalized original payload on key replay; staging must verify exact retries succeed and changed category/title/body, conversation ID, or internal-note flag are rejected.
 - Database tests require a staging connection and are **not** demonstrated by passing GitHub CI.
