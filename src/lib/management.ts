@@ -1,4 +1,5 @@
 import { getDb } from "./supabase";
+import { coachingGradeEnabled, toCoachingGrade, type CoachingGrade } from "./coaching-grade";
 import { sendWelcomeEmail } from "./email";
 import { can, type Coach } from "./auth";
 
@@ -6,6 +7,7 @@ export interface CoachOverview {
   readonly id: string;
   readonly email: string;
   readonly fullName: string;
+  readonly coachingGrade: CoachingGrade | null;
   readonly latestAttempt: {
     readonly score: number;
     readonly passed: boolean;
@@ -44,6 +46,17 @@ export async function getManagementOverview(requestedBy: Coach): Promise<CoachOv
   if (coachError) throw new Error(`coach list failed: ${coachError.message}`);
   if (!coaches || coaches.length === 0) return [];
 
+  // Read only when the flag is on: before the migration the column does not exist.
+  const gradeByCoach = new Map<string, CoachingGrade | null>();
+  if (coachingGradeEnabled()) {
+    const { data: grades, error: gradeError } = await db
+      .from("coaches")
+      .select("id, coaching_grade")
+      .in("id", coaches.map((coach) => coach.id));
+    if (gradeError) throw new Error(`coaching grade list failed: ${gradeError.message}`);
+    for (const row of grades ?? []) gradeByCoach.set(row.id, toCoachingGrade(row.coaching_grade));
+  }
+
   const { data: attempts, error: attemptError } = await db
     .from("assessment_attempts")
     .select("coach_id, score, passed, submitted_at")
@@ -81,6 +94,7 @@ export async function getManagementOverview(requestedBy: Coach): Promise<CoachOv
       id: coach.id,
       email: coach.email,
       fullName: coach.full_name,
+      coachingGrade: gradeByCoach.get(coach.id) ?? null,
       latestAttempt: attempt
         ? { score: attempt.score, passed: attempt.passed, submittedAt: attempt.submitted_at }
         : null,

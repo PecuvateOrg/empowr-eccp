@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { can, getCurrentCoach } from "@/lib/auth";
 import { getManagementOverview } from "@/lib/management";
 import { ProvisionCoachForm } from "./ProvisionCoachForm";
+import { CoachingGradeEditor } from "./CoachingGradeEditor";
+import { coachingGradeEnabled } from "@/lib/coaching-grade";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -20,6 +22,8 @@ export default async function ManagementPage() {
   const coach = await getCurrentCoach();
   if (!coach || !can(coach, "view_management")) redirect("/course");
   const roster = await getManagementOverview(coach);
+  const showGrade = coachingGradeEnabled();
+  const canEditGrade = can(coach, "change_roles");
   const passed = roster.filter(item => item.latestAttempt?.passed).length;
   const certified = roster.filter(item => item.certificate).length;
 
@@ -68,6 +72,8 @@ export default async function ManagementPage() {
                 <div><dt className="text-muted">Certificate</dt><dd className="mt-1 break-all font-semibold">{entry.certificate ? entry.certificate.certificateNumber : "Not issued"}</dd>
                   {entry.certificate && <p className="mt-1 text-xs text-muted">Renews {formatDate(entry.certificate.renewsAt)}</p>}</div>
               </dl>
+              {showGrade && <div className="mt-4 border-t border-border pt-4 text-sm"><p className="text-muted">Coaching grade</p>
+                <div className="mt-1 font-semibold"><CoachingGradeEditor coachId={entry.id} initialGrade={entry.coachingGrade} canEdit={canEditGrade} /></div></div>}
             </article>)}
           </div>
         )}

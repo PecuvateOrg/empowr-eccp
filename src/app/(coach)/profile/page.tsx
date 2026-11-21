@@ -4,10 +4,16 @@ import { getCurrentCoach } from "@/lib/auth";
 import { CoachProfileForm } from "@/components/CoachProfileForm";
 import { CoachAvailabilityForm } from "@/components/CoachAvailabilityForm";
 import { InstallECCPApp } from "@/components/InstallECCPApp";
+import { getDb } from "@/lib/supabase";
+import { coachingGradeEnabled, coachingGradeLabel, toCoachingGrade } from "@/lib/coaching-grade";
 
 export default async function CoachProfilePage() {
   const coach = await getCurrentCoach();
   if (!coach) redirect("/login");
+  // Read-only here: only an admin changes a grade, in ECCP Management.
+  const grade = coachingGradeEnabled()
+    ? toCoachingGrade((await getDb().from("coaches").select("coaching_grade").eq("id", coach.id).maybeSingle()).data?.coaching_grade)
+    : undefined;
 
   return (
     <main className="mx-auto w-full max-w-2xl py-10">
@@ -30,6 +36,10 @@ export default async function CoachProfilePage() {
             <dt className="text-sm text-muted">Email address</dt>
             <dd className="font-medium">{coach.email}</dd>
           </div>
+          {grade !== undefined && <div>
+            <dt className="text-sm text-muted">Coaching grade</dt>
+            <dd className="font-medium">{coachingGradeLabel(grade)}</dd>
+          </div>}
         </dl>
         <p className="mt-4 text-sm text-muted">
           Your account email is linked to the account you signed in with. To use a separate coach email, sign out and use that coach account. Admin changes must be verified against the correct account before updating any email.
