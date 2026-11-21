@@ -6,7 +6,7 @@ import { actorForWrite, fail, ordinaryConversation, uuid } from "@/lib/messaging
 const priorities = ["low","medium","high","urgent"];
 const statuses = ["new","in_progress","waiting_for_coach","resolved"];
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
- const auth = await actorForWrite();
+ const auth = await actorForWrite(request);
  if (auth.error) return auth.error;
  if (!can(auth.actor!, "change_roles")) return fail("Staff access required", 403);
  const { id } = await context.params;
