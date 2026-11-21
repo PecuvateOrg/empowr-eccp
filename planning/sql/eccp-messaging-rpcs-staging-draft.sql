@@ -5,10 +5,10 @@
 create or replace function eccp.message_actor(p_session_token text)
 returns table(actor_id uuid, actor_role text)
 language sql security definer set search_path = eccp, pg_temp as $$
- select c.id, c.admin_admin_role::text
+ select c.id, c.admin_role::text
  from eccp.coach_sessions s join eccp.coaches c on c.id = s.coach_id
  where s.refresh_token = p_session_token and s.expires_at > now()
- and c.admin_admin_role::text in ('coach','staff','admin')
+ and c.admin_role::text in ('coach','staff','admin')
  limit 1
 $$;
 revoke all on function eccp.message_actor(text) from public, anon, authenticated;
