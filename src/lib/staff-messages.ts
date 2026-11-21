@@ -9,6 +9,7 @@ export type StaffQueueItem = {
   id: string; title: string; category: string; status: string; priority: string;
   coachName: string; assigneeId: string | null; assigneeName: string | null;
   updatedAt: string; lastPublicAt: string | null; lastPublicByCoach: boolean; waitingForStaff: boolean;
+  lastPublicId: string | null; lastPublicBody: string | null;
 };
 
 async function namesAndRoles(ids: string[]) {
@@ -28,11 +29,11 @@ export async function staffQueue(): Promise<StaffQueueItem[]> {
   if (!convs?.length) return [];
   const ids = convs.map(c => c.id);
   const { data: entries, error: entryError } = await db.from("message_entries")
-    .select("conversation_id,author_id,created_at").in("conversation_id", ids)
+    .select("id,conversation_id,author_id,body,created_at").in("conversation_id", ids)
     .eq("internal_note", false).order("created_at", { ascending: false }).limit(2000);
   if (entryError) throw new Error(`queue entries: ${entryError.message}`);
-  const lastPublic = new Map<string, { author: string; at: string }>();
-  for (const e of entries ?? []) if (!lastPublic.has(e.conversation_id)) lastPublic.set(e.conversation_id, { author: e.author_id, at: e.created_at });
+  const lastPublic = new Map<string, { id: string; author: string; at: string; body: string }>();
+  for (const e of entries ?? []) if (!lastPublic.has(e.conversation_id)) lastPublic.set(e.conversation_id, { id: e.id, author: e.author_id, at: e.created_at, body: e.body });
   const people = await namesAndRoles([...new Set([
     ...convs.map(c => c.created_by), ...convs.map(c => c.assigned_staff_id).filter(Boolean) as string[],
     ...[...lastPublic.values()].map(l => l.author),
@@ -44,6 +45,7 @@ export async function staffQueue(): Promise<StaffQueueItem[]> {
       coachName: people.get(c.created_by)?.name ?? "Coach",
       assigneeId: c.assigned_staff_id, assigneeName: c.assigned_staff_id ? people.get(c.assigned_staff_id)?.name ?? null : null,
       updatedAt: c.updated_at, lastPublicAt: last?.at ?? null,
+      lastPublicId: last?.id ?? null, lastPublicBody: last?.body ?? null,
       lastPublicByCoach: !!last && people.get(last.author)?.role === "coach",
     };
     return { ...item, waitingForStaff: waitingForStaff(item) };

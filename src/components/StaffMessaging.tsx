@@ -20,10 +20,10 @@ async function fetchEntries(id:string):Promise<Entry[]> {
  const data=await jsonOrError(await fetch(`/api/management/messages/${id}/history`,{cache:"no-store"})) as {messages?:Entry[]};
  return data.messages??[];
 }
-export function StaffMessaging({ canManage }: { canManage:boolean }) {
+export function StaffMessaging({ canManage, initialSelected=null }: { canManage:boolean; initialSelected?:string|null }) {
  const [threads,setThreads]=useState<Thread[]>([]);
  const [staff,setStaff]=useState<Staff[]>([]);
- const [selected,setSelected]=useState<string|null>(null);
+ const [selected,setSelected]=useState<string|null>(initialSelected);
  const [entries,setEntries]=useState<Entry[]>([]);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
