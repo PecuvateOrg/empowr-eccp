@@ -1,5 +1,5 @@
 import { can, getCurrentCoach } from "@/lib/auth";
-import { getDb } from "@/lib/supabase";
+import { staffThreadEntries } from "@/lib/staff-messages";
 import { fail, messagingDisabled, ordinaryConversation, uuid } from "@/lib/messaging-write";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -12,10 +12,11 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
  const found = await ordinaryConversation(id);
  if (found.error) return found.error;
  if (found.conversation!.kind !== "staff_inbox") return fail("Conversation not found", 404);
- const { data, error } = await getDb().from("message_entries")
-  .select("id,author_id,body,internal_note,created_at")
-  .eq("conversation_id", id)
-  .order("created_at", { ascending: true }).limit(200);
- if (error) return fail("Messages unavailable", 503);
- return Response.json({ messages: data ?? [] }, { headers: { "Cache-Control": "no-store" } });
+ try {
+  const messages = await staffThreadEntries(id);
+  return Response.json({ messages }, { headers: { "Cache-Control": "no-store" } });
+ } catch (error) {
+  console.error("[staff-inbox] history failed", error);
+  return fail("Messages unavailable", 503);
+ }
 }

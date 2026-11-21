@@ -1,5 +1,6 @@
 import { can, getCurrentCoach } from "@/lib/auth";
 import { getDb } from "@/lib/supabase";
+import { toCoachEntry } from "@/lib/coach-messages-view";
 import { fail, isParticipant, ordinaryConversation, uuid, messagingDisabled } from "@/lib/messaging-write";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
@@ -20,5 +21,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   .eq("internal_note", false)
   .order("created_at", { ascending: true }).limit(200);
  if (error) return fail("Messages unavailable", 503);
- return Response.json({ messages: data ?? [] }, { headers: { "Cache-Control": "no-store" } });
+ // Coaches get "You" / "ECCP staff team", never a staff id; staff keep raw rows.
+ const messages = staff ? data ?? [] : (data ?? []).map(e => toCoachEntry(e, actor.id));
+ return Response.json({ messages }, { headers: { "Cache-Control": "no-store" } });
 }
