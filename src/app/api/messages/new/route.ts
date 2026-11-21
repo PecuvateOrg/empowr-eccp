@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/supabase";
-import { actorForWrite, fail, messageBody, textOnlyMessagingPayload, uuid } from "@/lib/messaging-write";
+import { actorForWrite, fail, messageBody, textOnlyMessagingPayload, uuid, rpcFail } from "@/lib/messaging-write";
 
 const categories = ["scheduling", "training", "general", "other"] as const;
 export async function POST(request: Request) {
@@ -19,6 +19,6 @@ export async function POST(request: Request) {
  const { data, error } = await getDb().rpc("message_create_staff_enquiry", {
    p_idempotency_key: input.idempotencyKey, p_session_token: auth.token!, p_category: input.category, p_title: input.title.trim(), p_body: input.body.trim(),
  });
- if (error) return fail("Message creation unavailable", 503);
+ if (error) return rpcFail(error, "Message creation unavailable");
  return NextResponse.json({ conversationId: data }, { status: 201 });
 }

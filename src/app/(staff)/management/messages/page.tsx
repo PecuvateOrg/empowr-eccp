@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
 import Link from "next/link";
 export default function StaffMessagesPage() {
+ if (process.env.ECCP_MESSAGING_ENABLED !== "true") notFound();
  return <main className="py-10">
   <p className="text-xs font-black uppercase tracking-widest text-red-dark">ECCP Management</p>
   <h1 className="mt-3 text-3xl font-bold text-ink">Staff Inbox</h1>

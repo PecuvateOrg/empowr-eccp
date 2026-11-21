@@ -40,7 +40,7 @@ The draft PR remains unmerged; role and navigation fixes are committed, but stag
 ## Retention and attachments — proposed policy, approval required
 
 - **Phase 1:** text-only conversations and internal notes. Reject multipart uploads and attachment-related fields. Do not store file blobs, remote file URLs, or base64 media as supported attachment types.
-- **Routine conversations:** propose retaining messages, assignment history, and staff notes for **24 months after resolution**, then deleting them through an audited, separately approved retention job. The 24-month period was approved by the Empowr project owner on 2026-11-21; the deletion job is not implemented or deployed.
+- **Routine conversations:** propose retaining messages, assignment history, and staff notes for **24 months after resolution**, then deleting them through an audited, separately approved retention job. The 24-month period is recorded as owner-approved on 2026-11-21 (to be confirmed by the owner on this PR); the deletion job is not implemented or deployed.
 - **Safeguarding:** exclude from routine automated deletion. A designated safeguarding lead must approve a separate statutory/contractual retention schedule and access protocol before any safeguarding messaging is enabled. Do not infer a universal statutory retention period.
 - **Open cases, complaints, disputes, or legal holds:** suspend deletion until the relevant authorised owner approves release.
 - **Backups and audit events:** document backup expiry, audit retention, and secure erasure before activating any purge job. A production purge must never run from this draft.

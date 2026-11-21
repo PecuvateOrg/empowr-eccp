@@ -1,7 +1,7 @@
 import { can } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/supabase";
-import { actorForWrite, fail, messageBody, textOnlyMessagingPayload, ordinaryConversation, uuid, isParticipant } from "@/lib/messaging-write";
+import { actorForWrite, fail, messageBody, textOnlyMessagingPayload, ordinaryConversation, uuid, isParticipant, rpcFail } from "@/lib/messaging-write";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
  const auth = await actorForWrite(request);
@@ -25,6 +25,6 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
    p_session_token: auth.token!, p_conversation_id: id, p_body: (payload as { body: string }).body.trim(),
    p_internal_note: false,
  });
- if (error) return fail("Reply unavailable", 503);
+ if (error) return rpcFail(error, "Reply unavailable");
  return NextResponse.json({ messageId: data }, { status: 201 });
 }

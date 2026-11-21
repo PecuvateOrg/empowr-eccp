@@ -1,4 +1,5 @@
--- ECCP messaging schema proposal. REVIEW IN STAGING ONLY. DO NOT APPLY TO PRODUCTION.
+-- ECCP messaging schema (phase 1). Only adds tables; the app ignores them until
+-- ECCP_MESSAGING_ENABLED=true. No staging database exists (see planning/sql/README.md).
 -- The application MUST enforce permissions server-side using persisted roles and membership.
 -- No direct anon/authenticated access to eccp schema.
 create table if not exists eccp.message_conversations (
@@ -6,7 +7,8 @@ create table if not exists eccp.message_conversations (
  kind text not null check (kind in ('staff_inbox','group','safeguarding')),
  category text not null check (category in ('scheduling','training','safeguarding','general','other')),
  title text not null default '',
- external_session_id text,
+ -- Sessions are EFN tasks (freelancer_tasks, owner 2026-11-20): keep the EFN task id.
+ efn_task_id text,
  idempotency_key uuid,
  assigned_staff_id uuid references eccp.coaches(id) on delete set null,
  priority text not null default 'medium' check (priority in ('low','medium','high','urgent')),
@@ -61,6 +63,12 @@ create table if not exists eccp.message_read_receipts (
  last_read_at timestamptz not null default now(),
  primary key(conversation_id, coach_id)
 );
+alter table eccp.message_conversations enable row level security;
+alter table eccp.message_participants enable row level security;
+alter table eccp.message_safeguarding_access enable row level security;
+alter table eccp.message_entries enable row level security;
+alter table eccp.message_events enable row level security;
+alter table eccp.message_read_receipts enable row level security;
 revoke all on eccp.message_conversations, eccp.message_participants, eccp.message_safeguarding_access,
  eccp.message_entries, eccp.message_events, eccp.message_read_receipts from public, anon, authenticated;
 -- Follow-up migration must add trusted role mapping, notification outbox, attachment metadata

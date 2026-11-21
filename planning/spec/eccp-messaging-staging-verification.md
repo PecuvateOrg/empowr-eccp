@@ -1,10 +1,15 @@
 # ECCP messaging staging verification — execution checklist
 
-**Status: NOT EXECUTED.** Do not run SQL in production or enable `ECCP_MESSAGING_ENABLED` until all checks pass.
+**Status: database matrix PASSED on 2026-11-21** (in one transaction on production that was then rolled back; nothing kept). There is **no staging database**: production is shared with Members, EFN and Waivers, and the messaging SQL only adds tables and functions. `ECCP_MESSAGING_ENABLED` stays off.
+
+## Results (2026-11-21, rolled back)
+Passed: idempotent replay returns the same id; a changed payload with the same key is refused (409); expired and unknown sessions are refused (401); coach B cannot reply in coach A's thread; a coach cannot write an internal note; staff cannot assign, prioritise or change status (403); an admin can, with a before/after audit event; a coach cannot be an assignee; safeguarding threads are refused on the ordinary path; the 6th conversation in a minute is rate limited (429).
+Found and fixed: `coach_sessions.refresh_token` is a uuid, so the draft's text comparison failed and the functions could not be created. Routes now map RPC error codes to 400/401/403/404/409/429 instead of 503 for everything. The origin check no longer uses `request.url`, which is an internal host on Amplify and would have rejected every write.
+Still to test over HTTP once a UI exists: same-origin writes through the live site, and the list endpoints.
 
 ## Preparation
-1. Confirm isolated staging Supabase project, backups, service-role access, and exact `eccp` schema migrations with the application owner.
-2. Apply `planning/sql/eccp-messaging-phase1.sql` and `planning/sql/eccp-messaging-rpcs-staging-draft.sql` **only to staging**, after review.
+1. Back up the `eccp` schema, then apply `planning/sql/eccp-messaging-phase1.sql` and `planning/sql/eccp-messaging-rpcs-staging-draft.sql` with the migration script, with the flag off.
+2. Re-run the rolled-back test matrix after any change to the SQL.
 3. Confirm `eccp.coaches.admin_role`, `eccp.coach_sessions.refresh_token`, session expiry, and service-role RPC grants.
 4. Use separate test accounts: coach A, coach B, staff, admin, designated safeguarding officer.
 

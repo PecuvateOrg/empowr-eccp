@@ -1,7 +1,7 @@
 import { can } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/supabase";
-import { actorForWrite, fail, ordinaryConversation, uuid } from "@/lib/messaging-write";
+import { actorForWrite, fail, ordinaryConversation, uuid, rpcFail } from "@/lib/messaging-write";
 
 const priorities = ["low","medium","high","urgent"];
 const statuses = ["new","in_progress","waiting_for_coach","resolved"];
@@ -28,6 +28,6 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
    p_has_assignee: "assigneeId" in input, p_assignee_id: input.assigneeId ?? null,
    p_priority: input.priority ?? null, p_status: input.status ?? null,
  });
- if (error) return fail("Assignment unavailable", 503);
+ if (error) return rpcFail(error, "Assignment unavailable");
  return NextResponse.json({ ok: true });
 }
