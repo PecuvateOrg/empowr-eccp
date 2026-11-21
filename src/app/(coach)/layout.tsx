@@ -29,6 +29,7 @@ export default async function CoachLayout({
               Management
             </Link>
           ) : null}
+          <Link className="font-semibold text-blue hover:text-blue-dark" href="/my-shifts">My Shifts</Link>
           {messaging ? (<Link className="font-semibold text-blue hover:text-blue-dark" href="/messages">Messages</Link>) : null}
           <span className="text-muted">{coach.full_name}</span>
           <SignOutButton />
