@@ -1,3 +1,4 @@
+import { can } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/supabase";
 import { actorForWrite, fail, messageBody, ordinaryConversation, uuid, isParticipant } from "@/lib/messaging-write";
@@ -11,7 +12,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
  if (found.error) return found.error;
  const actor = auth.actor!;
  // Staff inbox is shared with staff; groups require explicit membership.
- if (!(await isParticipant(id, actor.id)) && !(found.conversation!.kind === "staff_inbox" && actor.is_staff))
+ if (!(await isParticipant(id, actor.id)) && !(found.conversation!.kind === "staff_inbox" && can(actor, "view_management")))
    return fail("Conversation not found", 404);
  let payload: unknown;
  try { payload = await request.json(); } catch { return fail("Invalid JSON", 400); }
