@@ -4,7 +4,7 @@ import { actorForWrite, fail, messageBody, uuid } from "@/lib/messaging-write";
 
 const categories = ["scheduling", "training", "general", "other"] as const;
 export async function POST(request: Request) {
- const auth = await actorForWrite();
+ const auth = await actorForWrite(request);
  if (auth.error) return auth.error;
  let payload: unknown;
  try { payload = await request.json(); } catch { return fail("Invalid JSON", 400); }
