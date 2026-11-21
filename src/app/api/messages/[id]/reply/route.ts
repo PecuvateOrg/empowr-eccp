@@ -1,7 +1,7 @@
 import { can } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/supabase";
-import { actorForWrite, fail, messageBody, ordinaryConversation, uuid, isParticipant } from "@/lib/messaging-write";
+import { actorForWrite, fail, messageBody, textOnlyMessagingPayload, ordinaryConversation, uuid, isParticipant } from "@/lib/messaging-write";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
  const auth = await actorForWrite(request);
@@ -17,6 +17,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
  let payload: unknown;
  try { payload = await request.json(); } catch { return fail("Invalid JSON", 400); }
  if (!payload || typeof payload !== "object" || !messageBody((payload as Record<string, unknown>).body)) return fail("Invalid message", 400);
+ if (!textOnlyMessagingPayload(request, payload as Record<string, unknown>)) return fail("Only JSON text messages are supported", 415);
  const idempotencyKey = (payload as Record<string, unknown>).idempotencyKey;
  if (!uuid(idempotencyKey)) return fail("Valid idempotencyKey required", 400);
  const { data, error } = await getDb().rpc("message_add_entry", {
