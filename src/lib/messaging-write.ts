@@ -6,6 +6,12 @@ import { NextResponse } from "next/server";
 export const messagingDisabled = () => process.env.ECCP_MESSAGING_ENABLED !== "true";
 export const fail = (message: string, status: number) => NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 export const uuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+/** Phase 1 is text-only: reject attachment fields and unsupported media types. */
+export function textOnlyMessagingPayload(request: Request, input: Record<string, unknown>): boolean {
+ const contentType = request.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+ if (contentType !== "application/json") return false;
+ return !["attachment", "attachments", "file", "files", "media", "upload", "uploadId", "attachmentIds"].some(key => Object.prototype.hasOwnProperty.call(input, key));
+}
 export const messageBody = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0 && value.length <= 10000;
 /** Reject cross-site and origin-less cookie-authenticated writes. */
 export function trustedMessagingOrigin(request: Request): boolean {
