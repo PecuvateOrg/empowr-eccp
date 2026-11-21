@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentCoach } from "@/lib/auth";
+import { can, getCurrentCoach } from "@/lib/auth";
 import { BrandMark } from "@/components/BrandMark";
 import { SignOutButton } from "@/components/SignOutButton";
 
@@ -16,14 +16,14 @@ export default async function StaffLayout({
 }) {
   const coach = await getCurrentCoach();
   if (!coach) redirect("/login");
-  if (!coach.is_staff) redirect("/course");
+  if (!can(coach, "view_management")) redirect("/course");
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-5 py-8 sm:px-8">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <BrandMark href="/management" label="ECCP — Management" />
         <div className="flex items-center gap-4 text-sm">
-          <Link className="font-bold text-blue hover:text-blue-dark" href="/management/messages">Staff Inbox</Link>
+          {process.env.ECCP_MESSAGING_ENABLED === "true" ? (<Link className="font-bold text-blue hover:text-blue-dark" href="/management/messages">Staff Inbox</Link>) : null}
           <Link className="font-bold text-blue hover:text-blue-dark" href="/course">
             Coach view
           </Link>
