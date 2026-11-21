@@ -1,5 +1,8 @@
 # ECCP Messaging — production verification handoff
 
+## Update — 21 November 2026
+The project owner reports that Shaun has confirmed the Supabase database setup is complete. This is **owner-reported confirmation**, not independent read-only database evidence. Do not rerun migrations solely because the prior test transaction was rolled back. The live authenticated API checks remain outstanding, and the messaging feature flag should remain OFF pending release sign-off.
+
 ## Why this is needed
 The database security test matrix passed on 2026-11-21 **inside a rolled-back transaction**. This does not prove the messaging schema and RPCs were subsequently installed permanently. The management messaging page currently returns 404; this is consistent with the feature flag remaining off and is **not** evidence of a failed migration.
 
