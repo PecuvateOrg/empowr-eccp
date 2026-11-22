@@ -10,7 +10,7 @@ import type { StaffingSession } from "./members-schedule-validation";
 // Off unless ECCP_STAFFING_SYNC_ENABLED is exactly "true". Nothing schedules
 // this yet; activation needs maintainer approval (ops/staffing-integration-review.md).
 
-export type Snapshot = { snapshotVersion: string; sessions: StaffingSession[] };
+export type Snapshot = { snapshotVersion: string; coversUntil: string | null; sessions: StaffingSession[] };
 export type RpcResult = { data: unknown; error: { message: string } | null };
 export type SyncDeps = {
   enabled: boolean;
@@ -44,6 +44,8 @@ export async function runStaffingSync(runId: string, deps: SyncDeps): Promise<Sy
   const { data, error } = await deps.rpc("staffing_apply_snapshot", {
     p_run_id: runId,
     p_snapshot_version: snapshot.snapshotVersion,
+    // Sessions starting at or after this are never counted missing (null = no end).
+    p_covers_until: snapshot.coversUntil,
     p_sessions: snapshot.sessions,
   });
   if (error) return fail(runId, "apply_failed", deps);

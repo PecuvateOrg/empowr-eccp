@@ -7,6 +7,7 @@ import { runStaffingSync, type SyncDeps, type Snapshot } from "./staffing-sync";
 const runId = "dddddddd-0000-0000-0000-000000000001";
 const snapshot: Snapshot = {
   snapshotVersion: "a".repeat(64),
+  coversUntil: "2027-03-01T00:00:00Z",
   sessions: [{ source_key: "occurrence:1", offering_id: "1", title: "Example", starts_at: "2027-01-11T15:30:00Z",
     ends_at: "2027-01-11T16:30:00Z", venue: null, status: "scheduled" }],
 };
@@ -36,7 +37,7 @@ test("applies the whole snapshot in one call with the caller's run id", async ()
   assert.equal(out.status, "applied");
   assert.equal(calls.length, 1);
   assert.equal(calls[0].fn, "staffing_apply_snapshot");
-  assert.deepEqual(calls[0].args, { p_run_id: runId, p_snapshot_version: snapshot.snapshotVersion, p_sessions: snapshot.sessions });
+  assert.deepEqual(calls[0].args, { p_run_id: runId, p_snapshot_version: snapshot.snapshotVersion, p_covers_until: snapshot.coversUntil, p_sessions: snapshot.sessions });
 });
 
 test("Members unavailable: nothing applied, failure recorded with a short code", async () => {

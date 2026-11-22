@@ -4,7 +4,7 @@ import { collectSchedule } from "./members-schedule-validation";
 
 const version = "a".repeat(64);
 const row = (id: string) => ({ source_key: "occurrence:" + id, offering_id: "offering", title: "Example", starts_at: "2027-01-01T10:00:00Z", ends_at: "2027-01-01T11:00:00Z", status: "scheduled", venue: null });
-const page = (offset: number, sessions: unknown[], total: number) => ({ schema_version: 1, timezone: "Europe/London", snapshot_version: version, offset, sessions, total, complete: offset + sessions.length === total, next_offset: offset + sessions.length === total ? null : offset + sessions.length });
+const page = (offset: number, sessions: unknown[], total: number) => ({ schema_version: 1, covers_until: null as string | null, timezone: "Europe/London", snapshot_version: version, offset, sessions, total, complete: offset + sessions.length === total, next_offset: offset + sessions.length === total ? null : offset + sessions.length });
 
 test("collects all pages with stable snapshot", async () => {
   const result = await collectSchedule(async (offset, expected) => {
@@ -27,6 +27,15 @@ test("rejects changed snapshot and total", async () => {
 test("rejects malformed times and statuses", async () => {
   await assert.rejects(collectSchedule(async () => page(0, [{ ...row("1"), ends_at: "invalid" }], 1)), /times/);
   await assert.rejects(collectSchedule(async () => page(0, [{ ...row("1"), status: "completed" }], 1)), /status/);
+});
+test("returns the covered range; missing, unreadable or changing range is refused", async () => {
+  assert.equal((await collectSchedule(async () => page(0, [], 0))).coversUntil, null);
+  assert.equal((await collectSchedule(async () => ({ ...page(0, [], 0), covers_until: "2027-03-01T00:00:00Z" }))).coversUntil, "2027-03-01T00:00:00Z");
+  const noRange: Record<string, unknown> = page(0, [], 0);
+  delete noRange.covers_until;
+  await assert.rejects(collectSchedule(async () => noRange), /Inconsistent/);
+  await assert.rejects(collectSchedule(async () => ({ ...page(0, [], 0), covers_until: "soon" })), /range/);
+  await assert.rejects(collectSchedule(async offset => ({ ...page(offset, [row(String(offset))], 2), covers_until: offset ? "2027-03-01T00:00:00Z" : null })), /Inconsistent/);
 });
 test("preserves explicit cancellation", async () => {
   const result = await collectSchedule(async () => page(0, [{ ...row("1"), status: "cancelled" }], 1));

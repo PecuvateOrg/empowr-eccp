@@ -33,16 +33,23 @@ function session(value: unknown): StaffingSession {
     venue: v ? { name: required(v.name), address: nullable(v.address), postcode: nullable(v.postcode) } : null };
 }
 
-export async function collectSchedule(fetchPage: (offset: number, version?: string) => Promise<unknown>): Promise<{ snapshotVersion: string; sessions: StaffingSession[] }> {
+export async function collectSchedule(fetchPage: (offset: number, version?: string) => Promise<unknown>): Promise<{ snapshotVersion: string; coversUntil: string | null; sessions: StaffingSession[] }> {
   const sessions: StaffingSession[] = [];
   const seen = new Set<string>();
   let version: string | undefined;
   let total: number | undefined;
+  // End of the range Members covered (null = every future session); identical on every page.
+  let coversUntil: string | null | undefined;
   for (let page = 0; page < 400; page++) {
     const data = record(await fetchPage(sessions.length, version));
     const current = required(data.snapshot_version);
     const count = data.total;
     if (data.schema_version !== 1 || data.timezone !== "Europe/London" || !/^[a-f0-9]{64}$/.test(current) || typeof count !== "number" || !Number.isSafeInteger(count) || count < 0 || count > 100000 || data.offset !== sessions.length || !Array.isArray(data.sessions) || data.sessions.length > 250 || (version !== undefined && current !== version) || (total !== undefined && count !== total)) throw new Error("Inconsistent schedule page");
+    if (!("covers_until" in data)) throw new Error("Inconsistent schedule page");
+    const until = data.covers_until === null ? null : required(data.covers_until);
+    if (until !== null && !Number.isFinite(Date.parse(until))) throw new Error("Invalid schedule range");
+    if (coversUntil !== undefined && until !== coversUntil) throw new Error("Inconsistent schedule page");
+    coversUntil = until;
     version = current;
     total = count;
     for (const raw of data.sessions) {
@@ -52,7 +59,7 @@ export async function collectSchedule(fetchPage: (offset: number, version?: stri
       sessions.push(row);
     }
     if (sessions.length > total) throw new Error("Invalid schedule total");
-    if (data.complete === true && data.next_offset === null && sessions.length === total) return { snapshotVersion: version, sessions };
+    if (data.complete === true && data.next_offset === null && sessions.length === total) return { snapshotVersion: version, coversUntil, sessions };
     if (data.complete !== false || !data.sessions.length || sessions.length >= total || data.next_offset !== sessions.length) throw new Error("Invalid schedule pagination");
   }
   throw new Error("Schedule page limit exceeded");
