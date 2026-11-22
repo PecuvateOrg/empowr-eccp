@@ -3,6 +3,7 @@ import Link from "next/link";
 import { can, getCurrentCoach } from "@/lib/auth";
 import { BrandMark } from "@/components/BrandMark";
 import { SignOutButton } from "@/components/SignOutButton";
+import { staffingEnabled } from "@/lib/staffing-admin";
 
 // This layout IS the access control for every staff page beneath it — it does
 // NOT inherit (coach)/layout.tsx's gate, since a route group's layout only
@@ -23,6 +24,7 @@ export default async function StaffLayout({
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <BrandMark href="/management" label="ECCP — Management" />
         <div className="flex items-center gap-4 text-sm">
+          {staffingEnabled() && can(coach, "manage_scheduling") ? (<Link className="font-bold text-blue hover:text-blue-dark" href="/management/shifts">Shifts</Link>) : null}
           {process.env.ECCP_MESSAGING_ENABLED === "true" ? (<Link className="font-bold text-blue hover:text-blue-dark" href="/management/messages">Staff Inbox</Link>) : null}
           <Link className="font-bold text-blue hover:text-blue-dark" href="/course">
             Coach view

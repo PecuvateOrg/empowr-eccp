@@ -1,5 +1,6 @@
--- REVIEW ONLY. Apply after ops/staffing-schema-proposed.sql, through the
--- schema-of-record migration, after maintainer approval and staging tests.
+-- APPLIED to the live database 2026-11-22 (owner approval) as Empowr CIC
+-- projects/supabase/migrations/20261122183001-04_eccp_staffing_*.sql. Keep this
+-- file in step with those migrations; change live only through a new migration.
 --
 -- eccp.staffing_assign_shifts: the only writer of new shift assignments.
 -- Mirrors src/lib/staffing-assignment-plan.ts (planAssignments) inside one
