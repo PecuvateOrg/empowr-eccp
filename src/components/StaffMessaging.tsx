@@ -137,10 +137,10 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
      </article>)}
     </div>
     <form onSubmit={e=>void submit(e,false)} className="sticky bottom-0 mt-5 space-y-3 bg-card pt-3">
-     <label className="block text-sm font-bold" htmlFor="staff-message">Reply or add an internal note</label>
+     <label className="block text-sm font-bold" htmlFor="staff-message">Reply to coach</label>
      <textarea id="staff-message" required rows={4} maxLength={10000} value={message} onChange={e=>{setMessage(e.target.value);pendingKey.current=null;}} className="w-full rounded-xl border border-border p-3" placeholder="Write a message…" />
      <p className="text-xs text-muted">For private staff notes, use the management-only panel.</p>
-     <button disabled={sending} className="rounded-xl bg-blue px-5 py-3 font-bold text-white disabled:opacity-60">{sending?"Saving…":internal?"Save internal note":"Send reply"}</button>
+     <button disabled={sending} className="rounded-xl bg-blue px-5 py-3 font-bold text-white disabled:opacity-60">{sending?"Saving…":"Send reply"}</button>
     </form>
    </>}
    {error&&<p role="alert" className="mt-3 text-sm font-semibold text-red-dark">{error}</p>}
