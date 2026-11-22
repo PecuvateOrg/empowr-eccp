@@ -49,7 +49,10 @@ export function CoachComplianceReminderPanel({ coachId }: { coachId: string }) {
       .then(result => { if (active) setData(result as CoachData); })
       .catch(() => { if (active) setError("Compliance records are not available yet."); })
       .finally(() => { if (active) setLoading(false); });
-    void loadHistory();
+    fetch(`/api/management/compliance/history?coachId=${encodeURIComponent(coachId)}`, { cache: "no-store" })
+      .then(jsonOrThrow)
+      .then(result => { if (active) { setHistory((result as { events: ReminderEvent[] }).events); setHistoryError(false); } })
+      .catch(() => { if (active) setHistoryError(true); });
     return () => { active = false; };
   }, [coachId, loadHistory]);
 
