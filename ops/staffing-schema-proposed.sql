@@ -38,6 +38,9 @@ create table eccp.shift_assignments (
  approved_at timestamptz,
  recurrence_ref uuid,
  pay_classification text,
+ created_by uuid not null references eccp.coaches(id) on delete restrict,
+ -- Idempotency key of the eccp.staffing_assign_shifts call that created the row.
+ request_key uuid not null,
  cancelled_at timestamptz,
  cancelled_by uuid references eccp.coaches(id) on delete restrict,
  cancel_reason text,
@@ -52,6 +55,7 @@ create table eccp.shift_assignments (
  ) where (state = 'confirmed')
 );
 create index shift_assignments_coach_idx on eccp.shift_assignments(coach_id);
+create unique index shift_assignments_request_unique on eccp.shift_assignments(request_key, session_id);
 create index shift_assignments_session_idx on eccp.shift_assignments(session_id);
 
 -- Append-only history of every assignment change.
@@ -99,8 +103,9 @@ create trigger shift_assignments_copy_times before insert or update of session_i
 
 -- A session time change moves its assignments; the overlap constraint then
 -- rejects the whole update if any coach would be double-booked.
+-- Security definer: the sync role has no direct write access to assignments.
 create function eccp.staffing_session_propagate_times() returns trigger
-language plpgsql set search_path = eccp, pg_temp as $$
+language plpgsql security definer set search_path = eccp, pg_temp as $$
 begin
  update eccp.shift_assignments set starts_at = new.starts_at, ends_at = new.ends_at
  where session_id = new.id;
@@ -124,10 +129,12 @@ alter table eccp.shift_assignment_events enable row level security;
 alter table eccp.staffing_sync_runs enable row level security;
 revoke all on eccp.staffing_sessions, eccp.shift_assignments, eccp.shift_assignment_events, eccp.staffing_sync_runs
  from public, anon, authenticated;
-grant select, insert, update on eccp.staffing_sessions, eccp.shift_assignments, eccp.staffing_sync_runs to service_role;
-grant select, insert on eccp.shift_assignment_events to service_role;
+grant select, insert, update on eccp.staffing_sessions, eccp.staffing_sync_runs to service_role;
+-- Assignments and their events are written only by reviewed security-definer
+-- functions (ops/staffing-assign-function-proposed.sql), so every change is audited.
+grant select on eccp.shift_assignments, eccp.shift_assignment_events to service_role;
 revoke all on function eccp.staffing_touch_updated_at(), eccp.shift_assignment_copy_times(),
  eccp.staffing_session_propagate_times(), eccp.shift_assignment_events_append_only() from public;
 commit;
--- No assignment writer is enabled. The reviewed writer must lock, re-check
--- eligibility and write the assignment and its event in one transaction.
+-- Writer: ops/staffing-assign-function-proposed.sql (apply after this file).
+-- Cancellation and cover need their own audited functions before go-live.

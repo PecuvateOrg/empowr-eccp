@@ -10,6 +10,15 @@ Review PR #74 together with reconciliation PR #76. No production migration or fl
 - Missing-session tracking: `consecutive_missing` per session, `complete` and `missing_count` per sync run.
 - anon/authenticated are denied on all four tables; service_role cannot delete assignments.
 
+## Assignment writer (ops/staffing-assign-function-proposed.sql)
+`eccp.staffing_assign_shifts` is the only way to create assignments; service_role has read-only access to assignments and events. Caller identity comes from the session token (admin only). All sessions in a call are assigned, or none. Grade → role: Head Coach may be head or assistant; Assistant Coach assistant; Junior Assistant Coach junior assistant only. Idempotency key retries return the same rows. Tests: `ops/sql-tests/`.
+
+Open decisions for the writer:
+- **PROPOSED, not yet decided:** a certificate valid on the session date is required.
+- Not enforced: first aid for head coaches (no first-aid record in the database), availability, child count/coverage, more than one head per session.
+- Still needed before go-live: audited cancel and cover functions.
+- Staging check: on Supabase the function owner must bypass RLS (Supabase `postgres` does).
+
 ## Required schema decisions
 - Confirm coaches primary key and schema-of-record repository. Review proposed SQL against a disposable database.
 - Retries must not increment absence twice: the writer must count only distinct complete sync runs. Define bounded import horizon and retention.
