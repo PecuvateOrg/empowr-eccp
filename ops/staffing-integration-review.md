@@ -2,11 +2,19 @@
 
 Review PR #74 together with reconciliation PR #76. No production migration or flag activation is requested by this document.
 
+## Settled in the proposed SQL (tested 2026-11-22 on a disposable Postgres 17)
+- Coach primary key is `uuid` (checked on the live database); the dynamic type lookup is removed.
+- One coach cannot hold overlapping confirmed shifts: exclusion constraint on coach + time range. Assignment times are copied from the session by trigger, and a session time change that would double-book a coach is rejected as a whole.
+- Cancellation records who, when and why; a cancelled row without them is rejected.
+- `shift_assignment_events` is append-only (update/delete blocked by trigger); `updated_at` is kept by trigger.
+- Missing-session tracking: `consecutive_missing` per session, `complete` and `missing_count` per sync run.
+- anon/authenticated are denied on all four tables; service_role cannot delete assignments.
+
 ## Required schema decisions
 - Confirm coaches primary key and schema-of-record repository. Review proposed SQL against a disposable database.
-- Add missing snapshot counter and distinct completed sync-run tracking; retries must not increment absence twice. Define bounded import horizon and retention.
+- Retries must not increment absence twice: the writer must count only distinct complete sync runs. Define bounded import horizon and retention.
 - Add child count source and eligibility as-of session date, including qualification and availability policy. Never assume eligibility or child count from client.
-- Add assignment updated timestamp, cancellation history, agreed pay classification, cover request state/acceptance/approval and append-only audit.
+- Add agreed pay classification values, cover request state/acceptance/approval and append-only audit.
 - Add hashed revocable calendar subscription credentials scoped to one coach, notification outbox with unique delivery keys, attendance and first-aid report references. Restrict safeguarding data separately.
 
 ## Transaction boundaries

@@ -1,5 +1,9 @@
 -- REVIEW ONLY. Apply through schema-of-record migration after approval.
+-- Live check 2026-11-22: eccp.coaches.id is uuid; none of these tables exist yet.
 begin;
+
+create extension if not exists btree_gist with schema extensions;
+
 create table eccp.staffing_sessions (
  id uuid primary key default gen_random_uuid(),
  source_system text not null,
@@ -12,48 +16,118 @@ create table eccp.staffing_sessions (
  source_status text not null check (source_status in ('scheduled','cancelled')),
  reconciliation_state text not null default 'current' check (reconciliation_state in ('current','review')),
  last_seen_snapshot text not null,
+ -- Complete successful snapshots in a row that did not contain this session.
+ consecutive_missing integer not null default 0 check (consecutive_missing >= 0),
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
  unique (source_system,source_key)
 );
--- Derive the actual coaches.id type instead of assuming UUID.
-do $$
-declare coach_type text;
-begin
- select format_type(a.atttypid,a.atttypmod) into strict coach_type
- from pg_attribute a where a.attrelid='eccp.coaches'::regclass and a.attname='id' and not a.attisdropped;
- execute format('create table eccp.shift_assignments (
+
+create table eccp.shift_assignments (
  id uuid primary key default gen_random_uuid(),
  session_id uuid not null references eccp.staffing_sessions(id) on delete restrict,
- coach_id %1$s not null references eccp.coaches(id) on delete restrict,
- role text not null check (role in (''head'',''assistant'',''junior_assistant'',''champion'')),
- state text not null check (state in (''confirmed'',''cancelled'')),
+ coach_id uuid not null references eccp.coaches(id) on delete restrict,
+ role text not null check (role in ('head','assistant','junior_assistant','champion')),
+ state text not null check (state in ('confirmed','cancelled')),
+ -- Copied from the session by trigger so overlap can be enforced by constraint.
+ starts_at timestamptz not null,
+ ends_at timestamptz not null check (ends_at > starts_at),
  additional_paid boolean not null default false,
  reason text,
- approved_by %1$s references eccp.coaches(id) on delete restrict,
+ approved_by uuid references eccp.coaches(id) on delete restrict,
  approved_at timestamptz,
  recurrence_ref uuid,
  pay_classification text,
+ cancelled_at timestamptz,
+ cancelled_by uuid references eccp.coaches(id) on delete restrict,
+ cancel_reason text,
  created_at timestamptz not null default now(),
- check (not additional_paid or (nullif(btrim(reason),'''') is not null and approved_by is not null and approved_at is not null))
- )',coach_type);
-end $$;
-create unique index shift_assignments_active_unique on eccp.shift_assignments(session_id,coach_id) where state='confirmed';
+ updated_at timestamptz not null default now(),
+ check (not additional_paid or (nullif(btrim(reason),'') is not null and approved_by is not null and approved_at is not null)),
+ check ((state = 'cancelled') = (cancelled_at is not null and cancelled_by is not null)),
+ -- One coach cannot hold two confirmed shifts that overlap in time
+ -- (this also covers the same session twice).
+ constraint shift_assignments_no_overlap exclude using gist (
+  coach_id with =, tstzrange(starts_at, ends_at) with &&
+ ) where (state = 'confirmed')
+);
 create index shift_assignments_coach_idx on eccp.shift_assignments(coach_id);
+create index shift_assignments_session_idx on eccp.shift_assignments(session_id);
+
+-- Append-only history of every assignment change.
+create table eccp.shift_assignment_events (
+ id bigint generated always as identity primary key,
+ assignment_id uuid not null references eccp.shift_assignments(id) on delete restrict,
+ actor_id uuid references eccp.coaches(id) on delete restrict,
+ event_type text not null check (event_type in ('created','updated','cancelled')),
+ details jsonb not null default '{}'::jsonb,
+ created_at timestamptz not null default now()
+);
+create index shift_assignment_events_assignment_idx on eccp.shift_assignment_events(assignment_id);
+
 create table eccp.staffing_sync_runs (
  id uuid primary key default gen_random_uuid(),
  started_at timestamptz not null default now(),
  finished_at timestamptz,
  snapshot_version text,
  result text not null check (result in ('running','success','failed')),
+ complete boolean not null default false,
  session_count integer check (session_count >= 0),
+ missing_count integer check (missing_count >= 0),
  error_category text
 );
+
+-- Keep updated_at current.
+create function eccp.staffing_touch_updated_at() returns trigger
+language plpgsql set search_path = eccp, pg_temp as $$
+begin new.updated_at := now(); return new; end $$;
+create trigger staffing_sessions_touch before update on eccp.staffing_sessions
+ for each row execute function eccp.staffing_touch_updated_at();
+create trigger shift_assignments_touch before update on eccp.shift_assignments
+ for each row execute function eccp.staffing_touch_updated_at();
+
+-- Assignment times always come from the session, never from the caller.
+create function eccp.shift_assignment_copy_times() returns trigger
+language plpgsql set search_path = eccp, pg_temp as $$
+begin
+ select s.starts_at, s.ends_at into strict new.starts_at, new.ends_at
+ from eccp.staffing_sessions s where s.id = new.session_id;
+ return new;
+end $$;
+create trigger shift_assignments_copy_times before insert or update of session_id, starts_at, ends_at
+ on eccp.shift_assignments for each row execute function eccp.shift_assignment_copy_times();
+
+-- A session time change moves its assignments; the overlap constraint then
+-- rejects the whole update if any coach would be double-booked.
+create function eccp.staffing_session_propagate_times() returns trigger
+language plpgsql set search_path = eccp, pg_temp as $$
+begin
+ update eccp.shift_assignments set starts_at = new.starts_at, ends_at = new.ends_at
+ where session_id = new.id;
+ return new;
+end $$;
+create trigger staffing_sessions_propagate_times after update of starts_at, ends_at
+ on eccp.staffing_sessions for each row
+ when (old.starts_at is distinct from new.starts_at or old.ends_at is distinct from new.ends_at)
+ execute function eccp.staffing_session_propagate_times();
+
+-- Events can never be changed or removed, including by service_role.
+create function eccp.shift_assignment_events_append_only() returns trigger
+language plpgsql set search_path = eccp, pg_temp as $$
+begin raise exception 'shift_assignment_events is append-only'; end $$;
+create trigger shift_assignment_events_no_change before update or delete on eccp.shift_assignment_events
+ for each row execute function eccp.shift_assignment_events_append_only();
+
 alter table eccp.staffing_sessions enable row level security;
 alter table eccp.shift_assignments enable row level security;
+alter table eccp.shift_assignment_events enable row level security;
 alter table eccp.staffing_sync_runs enable row level security;
-revoke all on eccp.staffing_sessions,eccp.shift_assignments,eccp.staffing_sync_runs from public,anon,authenticated;
-grant select,insert,update on eccp.staffing_sessions,eccp.shift_assignments,eccp.staffing_sync_runs to service_role;
+revoke all on eccp.staffing_sessions, eccp.shift_assignments, eccp.shift_assignment_events, eccp.staffing_sync_runs
+ from public, anon, authenticated;
+grant select, insert, update on eccp.staffing_sessions, eccp.shift_assignments, eccp.staffing_sync_runs to service_role;
+grant select, insert on eccp.shift_assignment_events to service_role;
+revoke all on function eccp.staffing_touch_updated_at(), eccp.shift_assignment_copy_times(),
+ eccp.staffing_session_propagate_times(), eccp.shift_assignment_events_append_only() from public;
 commit;
--- No assignment writer is enabled. Transactional overlap, eligibility,
--- audit and reconciliation procedures must be reviewed before activation.
+-- No assignment writer is enabled. The reviewed writer must lock, re-check
+-- eligibility and write the assignment and its event in one transaction.
