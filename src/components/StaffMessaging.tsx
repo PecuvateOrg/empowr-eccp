@@ -40,7 +40,7 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
  const [message,setMessage]=useState("");
- const [internal,setInternal]=useState(false);
+ const [noteBody,setNoteBody]=useState("");
  const [sending,setSending]=useState(false);
  const [saving,setSaving]=useState(false);
  const [success,setSuccess]=useState("");
@@ -86,14 +86,14 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
    .then(items=>{if(live){setEntries(items);setError("");}},e=>{if(live){setError(e instanceof Error?e.message:"Unable to load conversation");setEntries([]);}});
   return ()=>{live=false;};
  },[selected]);
- async function submit(e:FormEvent<HTMLFormElement>){
-  e.preventDefault();if(!selected||!message.trim()||sending)return;
+ async function submit(e:FormEvent<HTMLFormElement>,isNote=false){
+  e.preventDefault();const body=isNote?noteBody:message;if(!selected||!body.trim()||sending)return;
   setSending(true);setError("");setSuccess("");
   const key=pendingKey.current??crypto.randomUUID();pendingKey.current=key;
-  const path=internal?`/api/management/messages/${selected}/notes`:`/api/messages/${selected}/reply`;
+  const path=isNote?`/api/management/messages/${selected}/notes`:`/api/messages/${selected}/reply`;
   try {
-   await jsonOrError(await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({body:message.trim(),idempotencyKey:key})}));
-   pendingKey.current=null;setMessage("");setSuccess(internal?"Internal note saved.":"Reply sent.");
+   await jsonOrError(await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({body:body.trim(),idempotencyKey:key})}));
+   pendingKey.current=null;if(isNote)setNoteBody("");else setMessage("");setSuccess(isNote?"Internal note saved.":"Reply sent.");
    await loadEntries(selected);await refresh();
   }catch(e){setError(e instanceof Error?e.message:"Unable to send");}
   finally{setSending(false);}
@@ -136,7 +136,7 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
       <p className="whitespace-pre-wrap break-words text-sm">{entry.body}</p><p className="mt-2 text-xs text-muted">{new Date(entry.createdAt).toLocaleString("en-GB",{timeZone:"Europe/London",dateStyle:"medium",timeStyle:"short"})}</p>
      </article>)}
     </div>
-    <form onSubmit={e=>{setInternal(false);void submit(e);}} className="sticky bottom-0 mt-5 space-y-3 bg-card pt-3">
+    <form onSubmit={e=>void submit(e,false)} className="sticky bottom-0 mt-5 space-y-3 bg-card pt-3">
      <label className="block text-sm font-bold" htmlFor="staff-message">Reply or add an internal note</label>
      <textarea id="staff-message" required rows={4} maxLength={10000} value={message} onChange={e=>{setMessage(e.target.value);pendingKey.current=null;}} className="w-full rounded-xl border border-border p-3" placeholder="Write a message…" />
      <p className="text-xs text-muted">For private staff notes, use the management-only panel.</p>
@@ -152,7 +152,7 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
     <p className="mt-2 text-xs text-muted">Only staff can see these notes. They are never sent to the coach.</p>
     <button type="button" className="mt-3 text-sm font-semibold text-blue underline" onClick={()=>setNotesOpen(v=>!v)}>{notesOpen?"Hide notes":"Show notes"}</button>
     {notesOpen&&<div className="mt-3 max-h-72 space-y-2 overflow-y-auto">{entries.filter(e=>e.internalNote).length===0?<p className="text-sm text-muted">No internal notes yet.</p>:entries.filter(e=>e.internalNote).map(e=><article key={e.id} className="rounded-lg border border-border p-3 text-sm"><p className="font-semibold">{e.authorName}</p><p className="whitespace-pre-wrap break-words">{e.body}</p></article>)}</div>}
-    <form onSubmit={e=>{setInternal(true);void submit(e);}} className="mt-4 space-y-2"><label className="block text-sm font-semibold" htmlFor="internal-note">Add private note</label><textarea id="internal-note" rows={4} maxLength={10000} value={internal?message:""} onChange={e=>{setInternal(true);setMessage(e.target.value);pendingKey.current=null;}} onFocus={()=>setInternal(true)} className="w-full rounded-lg border border-border p-2" placeholder="Visible to staff only…" /><button disabled={sending||!internal||!message.trim()} className="rounded-lg bg-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-50">Save internal note</button></form>
+    <form onSubmit={e=>void submit(e,true)} className="mt-4 space-y-2"><label className="block text-sm font-semibold" htmlFor="internal-note">Add private note</label><textarea id="internal-note" rows={4} maxLength={10000} value={noteBody} onChange={e=>{setNoteBody(e.target.value);pendingKey.current=null;}} className="w-full rounded-lg border border-border p-2" placeholder="Visible to staff only…" /><button disabled={sending||!noteBody.trim()} className="rounded-lg bg-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-50">Save internal note</button></form>
    </>}
   </aside>
  </section>;
