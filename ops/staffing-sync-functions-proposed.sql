@@ -19,20 +19,22 @@
 --   duplicate key or malformed row -> the whole call is refused, nothing written
 --   sessions and assignments are never deleted
 --
--- Release gate: the snapshot does not state the date range it covers. If
--- Members' range shrinks, sessions beyond it would be counted as missing.
+--   missing is only counted inside the range the snapshot covers: Members sends
+--     covers_until (null = every future session); a session starting at or after
+--     it is not counted, so a shorter Members range never marks sessions missing
 --
 -- Error codes: ECS00 invalid input, ECS03 not authorised, ECS06 wrong state,
 -- ECS23 conflicting allocation.
 begin;
 
 -- 1. Apply one complete, validated snapshot. Same run id twice = no change.
-create function eccp.staffing_apply_snapshot(p_run_id uuid, p_snapshot_version text, p_sessions jsonb)
+create function eccp.staffing_apply_snapshot(p_run_id uuid, p_snapshot_version text, p_covers_until timestamptz, p_sessions jsonb)
 returns jsonb language plpgsql security definer set search_path = eccp, pg_temp as $$
 declare v_now timestamptz := now(); v_inserted int; v_review int; v_missing int; v_seen int; v_prev record;
 begin
  if p_run_id is null or p_snapshot_version is null or p_snapshot_version !~ '^[a-f0-9]{64}$'
-  or p_sessions is null or jsonb_typeof(p_sessions) <> 'array' or jsonb_array_length(p_sessions) > 100000 then
+  or p_sessions is null or jsonb_typeof(p_sessions) <> 'array' or jsonb_array_length(p_sessions) > 100000
+  or p_covers_until <= now() then
   raise exception 'invalid input' using errcode = 'ECS00';
  end if;
 
@@ -111,6 +113,7 @@ begin
    consecutive_missing = s.consecutive_missing + 1,
    reconciliation_state = case when s.consecutive_missing >= 1 then 'review' else s.reconciliation_state end
   where s.source_system = 'members' and s.source_status = 'scheduled' and s.starts_at > v_now
+   and (p_covers_until is null or s.starts_at < p_covers_until)
    and not exists (select 1 from snap n where n.source_key = s.source_key)
   returning 1)
  select count(*) into v_missing from miss;
@@ -118,11 +121,11 @@ begin
  select count(*) into v_review from eccp.staffing_sessions
  where source_system = 'members' and reconciliation_state = 'review';
 
- insert into eccp.staffing_sync_runs (id, started_at, finished_at, snapshot_version, result, complete,
+ insert into eccp.staffing_sync_runs (id, started_at, finished_at, snapshot_version, covers_until, result, complete,
   session_count, missing_count, inserted_count, review_count, error_category)
- values (p_run_id, v_now, clock_timestamp(), p_snapshot_version, 'success', true,
+ values (p_run_id, v_now, clock_timestamp(), p_snapshot_version, p_covers_until, 'success', true,
   v_seen, v_missing, v_inserted, v_review, null)
- on conflict (id) do update set finished_at = excluded.finished_at, snapshot_version = excluded.snapshot_version,
+ on conflict (id) do update set finished_at = excluded.finished_at, snapshot_version = excluded.snapshot_version, covers_until = excluded.covers_until,
   result = 'success', complete = true, session_count = excluded.session_count, missing_count = excluded.missing_count,
   inserted_count = excluded.inserted_count, review_count = excluded.review_count, error_category = null;
 
@@ -178,8 +181,8 @@ begin
  return s.id;
 end $$;
 
-revoke all on function eccp.staffing_apply_snapshot(uuid,text,jsonb), eccp.staffing_record_sync_failure(uuid,text),
+revoke all on function eccp.staffing_apply_snapshot(uuid,text,timestamptz,jsonb), eccp.staffing_record_sync_failure(uuid,text),
  eccp.staffing_accept_session_review(text,uuid) from public, anon, authenticated;
-grant execute on function eccp.staffing_apply_snapshot(uuid,text,jsonb), eccp.staffing_record_sync_failure(uuid,text),
+grant execute on function eccp.staffing_apply_snapshot(uuid,text,timestamptz,jsonb), eccp.staffing_record_sync_failure(uuid,text),
  eccp.staffing_accept_session_review(text,uuid) to service_role;
 commit;

@@ -111,6 +111,8 @@ create table eccp.staffing_sync_runs (
  started_at timestamptz not null default now(),
  finished_at timestamptz,
  snapshot_version text,
+ -- End of the range the snapshot covered (null = every future session).
+ covers_until timestamptz,
  result text not null check (result in ('running','success','failed')),
  complete boolean not null default false,
  session_count integer check (session_count >= 0),

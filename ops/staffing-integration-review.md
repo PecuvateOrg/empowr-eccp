@@ -14,14 +14,14 @@ Review PR #74 together with reconciliation PR #76. No production migration or fl
 `eccp.staffing_assign_shifts` is the only way to create assignments; service_role has read-only access to assignments and events. Caller identity comes from the session token (admin only). All sessions in a call are assigned, or none. Grade → role: Head Coach may be head or assistant; Assistant Coach assistant; Junior Assistant Coach junior assistant only. Idempotency key retries return the same rows. Tests: `ops/sql-tests/`.
 
 Open decisions for the writer:
-- **PROPOSED, not yet decided:** a certificate valid on the session date is required.
+- **Decided (owner, 2026-11-22):** a certificate valid on the session date is required.
 - Not enforced: first aid for head coaches (no first-aid record in the database), availability, child count/coverage, more than one head per session.
 
 ## Cancel and cover (ops/staffing-cancel-cover-functions-proposed.sql)
 - `staffing_cancel_assignment` (admin, reason required): cancels a shift and withdraws its open cover request; repeating it does nothing.
 - `staffing_request_cover` → `staffing_accept_cover` (only the named replacement, eligibility re-checked) → `staffing_approve_cover` (admin): original cancelled and replacement created with the same role and pay terms in one transaction; refused if the replacement would be double-booked, leaving everything unchanged. `staffing_close_cover`: the replacement declines, or the requester, the original coach or an admin withdraws.
 - One open cover request per shift. Assign and cover share `staffing_eligibility_error`, so the rules cannot drift apart.
-- **PROPOSED, not yet decided:** who may raise a cover request (the original coach for their own shift, or an admin).
+- **Decided (owner, 2026-11-22):** the original coach (for their own shift) or an admin may raise a cover request.
 - Not built: editing a shift in place (role, pay terms). Cancel and re-assign instead.
 - Staging check: on Supabase the function owner must bypass RLS (Supabase `postgres` does).
 
@@ -29,7 +29,7 @@ Open decisions for the writer:
 - `staffing_apply_snapshot(run_id, version, sessions)` is the only writer of sessions and the only home of the matching rules (replaces `planReconciliation`). One sync at a time; the caller picks the run id once per scheduled run and reuses it on retry, so a retry changes nothing and the missing count rises once per distinct run.
 - A time or venue change is stored as a proposal and set to review: current times and coaches' shifts do not move until an admin runs `staffing_accept_session_review`, which is refused (nothing changed) if the move would double-book a coach. A Members cancellation sets review and leaves shifts for an admin to cancel.
 - Missing future sessions: review on the second run in a row; never deleted. A malformed or duplicate snapshot writes nothing. Failures are recorded by `staffing_record_sync_failure` with a short code only.
-- **Release gate:** the snapshot does not state its date range; if Members' range shrinks, sessions beyond it would be counted missing.
+- **Decided (owner, 2026-11-22):** Members states the range it covers as `covers_until` on every page (null = every future session). A session starting at or after it is never counted missing, and each run stores the range. Release gate: the Members change ships before the ECCP sync is switched on.
 - service_role can no longer write any staffing table directly.
 
 ## Required schema decisions

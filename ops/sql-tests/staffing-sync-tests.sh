@@ -24,7 +24,7 @@ K4=$(row course-run:9:2027-02-03 2027-02-03T10:00:00Z 2027-02-03T11:00:00Z sched
 KP=$(row occurrence:past 2020-01-01T10:00:00Z 2020-01-01T11:00:00Z scheduled "Old")
 K5=$(row occurrence:5 2027-02-05T10:00:00Z 2027-02-05T11:00:00Z scheduled "Skate E")
 
-apply() { $P -c "set role service_role; select eccp.staffing_apply_snapshot('$1','$2','$3'::jsonb)" 2>&1 | grep -E '^(ERROR|\{)' | head -1; }
+apply() { $P -c "set role service_role; select eccp.staffing_apply_snapshot('$1','$2',${4:-null},'$3'::jsonb)" 2>&1 | grep -E '^(ERROR|\{)' | head -1; }
 F() { echo "-- $1"; $P -c "set role service_role; select eccp.$2" 2>&1 | grep -E '^(ERROR|[0-9a-z{])' | head -1; }
 sess() { $P -c "select reconciliation_state||' | status '||source_status||' | starts '||to_char(starts_at at time zone 'UTC','HH24:MI')||' | proposal '||coalesce(to_char(proposed_starts_at at time zone 'UTC','HH24:MI'),'none')||' | missing '||consecutive_missing||' | '||title from eccp.staffing_sessions where source_key='$1'"; }
 sid() { $P -c "select id from eccp.staffing_sessions where source_key='$1'"; }
@@ -73,6 +73,18 @@ echo "H's shift on occurrence:1 now starts $($P -c "select to_char(starts_at at 
 echo "reviewed by admin: $($P -c "select reviewed_by='a0000000-0000-0000-0000-000000000001' from eccp.staffing_sessions where source_key='occurrence:1'")"
 echo "occurrence:3 cancelled in Members; its row kept: $($P -c "select count(*) from eccp.staffing_sessions where source_key='occurrence:3'")"
 
+echo "== range: covers_until before course-run:9 and occurrence:5 -> neither counted missing"
+R5=dddddddd-0000-0000-0000-000000000005; V5=$(printf 'e%.0s' {1..64})
+echo "-- apply: $(apply $R5 $V5 "[$K1b,$K2b,$K3b]" "'2027-02-03T00:00:00Z'")"
+echo "course-run:9 missing (expect 0): $($P -c "select consecutive_missing from eccp.staffing_sessions where source_key='course-run:9:2027-02-03'")"
+echo "occurrence:5 missing (expect 0): $($P -c "select consecutive_missing from eccp.staffing_sessions where source_key='occurrence:5'")"
+echo "run covers_until stored: $($P -c "select to_char(covers_until at time zone 'UTC','YYYY-MM-DD') from eccp.staffing_sync_runs where id='$R5'")"
+echo "== control: same snapshot with no range (null) -> both ARE counted missing"
+echo "-- apply: $(apply dddddddd-0000-0000-0000-000000000006 $V5 "[$K1b,$K2b,$K3b]")"
+echo "course-run:9 missing (expect 1): $($P -c "select consecutive_missing from eccp.staffing_sessions where source_key='course-run:9:2027-02-03'")"
+echo "occurrence:5 missing (expect 1): $($P -c "select consecutive_missing from eccp.staffing_sessions where source_key='occurrence:5'")"
+echo "-- covers_until in the past refused: $(apply dddddddd-0000-0000-0000-000000000015 $V5 "[$K5]" "'2020-01-01T00:00:00Z'")"
+
 echo "== bad snapshots write nothing (expect ECS00 and unchanged counts)"
 BEFORE=$(counts)
 echo "-- duplicate key: $(apply dddddddd-0000-0000-0000-000000000010 $V1 "[$K5,$K5]")"
@@ -91,5 +103,5 @@ F "free-text failure category refused (ECS00)" "staffing_record_sync_failure('$R
 echo "== access (expect permission denied)"
 $P -c "set role service_role; insert into eccp.staffing_sync_runs(id,result) values(gen_random_uuid(),'success')" 2>&1 | head -1
 $P -c "set role service_role; insert into eccp.staffing_sessions(source_system,source_key,offering_id,title,starts_at,ends_at,source_status,last_seen_snapshot) values('members','occurrence:x','o','t',now(),now()+interval '1 hour','scheduled','v')" 2>&1 | head -1
-$P -c "set role anon; select eccp.staffing_apply_snapshot('$R1','$V1','[]'::jsonb)" 2>&1 | head -1
+$P -c "set role anon; select eccp.staffing_apply_snapshot('$R1','$V1',null,'[]'::jsonb)" 2>&1 | head -1
 $P -c "set role authenticated; select eccp.staffing_accept_session_review('$ADMIN','$(sid occurrence:1)')" 2>&1 | head -1
