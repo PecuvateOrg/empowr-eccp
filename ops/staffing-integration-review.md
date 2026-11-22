@@ -25,6 +25,13 @@ Open decisions for the writer:
 - Not built: editing a shift in place (role, pay terms). Cancel and re-assign instead.
 - Staging check: on Supabase the function owner must bypass RLS (Supabase `postgres` does).
 
+## Members sync (ops/staffing-sync-functions-proposed.sql)
+- `staffing_apply_snapshot(run_id, version, sessions)` is the only writer of sessions and the only home of the matching rules (replaces `planReconciliation`). One sync at a time; the caller picks the run id once per scheduled run and reuses it on retry, so a retry changes nothing and the missing count rises once per distinct run.
+- A time or venue change is stored as a proposal and set to review: current times and coaches' shifts do not move until an admin runs `staffing_accept_session_review`, which is refused (nothing changed) if the move would double-book a coach. A Members cancellation sets review and leaves shifts for an admin to cancel.
+- Missing future sessions: review on the second run in a row; never deleted. A malformed or duplicate snapshot writes nothing. Failures are recorded by `staffing_record_sync_failure` with a short code only.
+- **Release gate:** the snapshot does not state its date range; if Members' range shrinks, sessions beyond it would be counted missing.
+- service_role can no longer write any staffing table directly.
+
 ## Required schema decisions
 - Confirm coaches primary key and schema-of-record repository. Review proposed SQL against a disposable database.
 - Retries must not increment absence twice: the writer must count only distinct complete sync runs. Define bounded import horizon and retention.

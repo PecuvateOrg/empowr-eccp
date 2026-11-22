@@ -18,9 +18,20 @@ create table eccp.staffing_sessions (
  last_seen_snapshot text not null,
  -- Complete successful snapshots in a row that did not contain this session.
  consecutive_missing integer not null default 0 check (consecutive_missing >= 0),
+ -- Time/venue changes from the source wait here until an admin accepts them,
+ -- so a sync never moves coaches' shifts on its own.
+ proposed_starts_at timestamptz,
+ proposed_ends_at timestamptz,
+ proposed_venue jsonb,
+ has_proposal boolean not null default false,
+ reviewed_by uuid references eccp.coaches(id) on delete restrict,
+ reviewed_at timestamptz,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
- unique (source_system,source_key)
+ unique (source_system,source_key),
+ check (has_proposal = (proposed_starts_at is not null)),
+ check ((proposed_starts_at is null) = (proposed_ends_at is null)),
+ check (proposed_ends_at is null or proposed_ends_at > proposed_starts_at)
 );
 
 create table eccp.shift_assignments (
@@ -95,7 +106,8 @@ create unique index shift_cover_requests_open_unique on eccp.shift_cover_request
 create index shift_cover_requests_replacement_idx on eccp.shift_cover_requests(replacement_coach_id);
 
 create table eccp.staffing_sync_runs (
- id uuid primary key default gen_random_uuid(),
+ -- Chosen by the caller once per scheduled run and reused on retry.
+ id uuid primary key,
  started_at timestamptz not null default now(),
  finished_at timestamptz,
  snapshot_version text,
@@ -103,7 +115,9 @@ create table eccp.staffing_sync_runs (
  complete boolean not null default false,
  session_count integer check (session_count >= 0),
  missing_count integer check (missing_count >= 0),
- error_category text
+ inserted_count integer check (inserted_count >= 0),
+ review_count integer check (review_count >= 0),
+ error_category text check (error_category ~ '^[a-z_]{1,40}$')
 );
 
 -- Keep updated_at current.
@@ -158,12 +172,12 @@ alter table eccp.shift_cover_requests enable row level security;
 revoke all on eccp.staffing_sessions, eccp.shift_assignments, eccp.shift_assignment_events, eccp.staffing_sync_runs,
  eccp.shift_cover_requests
  from public, anon, authenticated;
-grant select, insert, update on eccp.staffing_sessions, eccp.staffing_sync_runs to service_role;
--- Assignments and their events are written only by reviewed security-definer
--- functions (ops/staffing-assign-function-proposed.sql), so every change is audited.
-grant select on eccp.shift_assignments, eccp.shift_assignment_events, eccp.shift_cover_requests to service_role;
+-- Every table is written only by reviewed security-definer functions
+-- (ops/staffing-*-proposed.sql), so every change is checked and audited.
+grant select on eccp.staffing_sessions, eccp.staffing_sync_runs, eccp.shift_assignments,
+ eccp.shift_assignment_events, eccp.shift_cover_requests to service_role;
 revoke all on function eccp.staffing_touch_updated_at(), eccp.shift_assignment_copy_times(),
  eccp.staffing_session_propagate_times(), eccp.shift_assignment_events_append_only() from public;
 commit;
 -- Writers, applied after this file in order: ops/staffing-assign-function-proposed.sql,
--- ops/staffing-cancel-cover-functions-proposed.sql.
+-- ops/staffing-cancel-cover-functions-proposed.sql, ops/staffing-sync-functions-proposed.sql.

@@ -79,7 +79,5 @@ for r in anon authenticated; do
   $P -c "set role $r; select eccp.staffing_assign_shifts('$A','$H',array['$(s 3)']::uuid[],'head',false,null,gen_random_uuid())" 2>&1 | head -1
 done
 
-echo "== sync (service_role) moves a session: assignment follows; a move that double-books is refused"
+echo "== direct session write by service_role (expect permission denied; syncs go through staffing_apply_snapshot)"
 $P -c "set role service_role; update eccp.staffing_sessions set starts_at='2026-12-01 14:30Z', ends_at='2026-12-01 15:30Z' where source_key='s3'" 2>&1 | head -1
-echo "s3 assignment now starts $($P -c "select to_char(starts_at at time zone 'UTC','HH24:MI') from eccp.shift_assignments where session_id='$(s 3)'")"
-$P -c "set role service_role; update eccp.staffing_sessions set starts_at='2026-12-01 11:30Z', ends_at='2026-12-01 12:30Z' where source_key='s3'" 2>&1 | head -1
