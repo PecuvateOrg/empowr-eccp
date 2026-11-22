@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentCoach } from "@/lib/auth";
+import { efn } from "@/lib/efn-client";
+import { efnMessage, londonDate, shiftScreensEnabled } from "@/lib/efn-staffing";
+import { MyShiftsList, type CoachShift } from "./MyShiftsList";
+
+export const dynamic = "force-dynamic";
 
 const example = [
   {date:"Monday 11 January 2027",time:"15:30–16:30",title:"Example school club",venue:"Example school",role:"Head Coach"},
@@ -9,6 +14,18 @@ const example = [
 export default async function MyShifts(){
   const coach = await getCurrentCoach();
   if(!coach)redirect("/login");
+  if(shiftScreensEnabled()){
+    // Shifts come from EFN, the staffing engine; ECCP only shows them.
+    const r = await efn(`/shifts?from=${londonDate(-1)}`, { coachId: coach.id });
+    const shifts = Array.isArray(r.data.shifts) ? r.data.shifts as CoachShift[] : null;
+    return <main className="py-8 min-w-0">
+      <Link href="/dashboard" className="text-sm font-bold text-blue">← Dashboard</Link>
+      <h1 className="mt-4 text-3xl font-black">My Shifts</h1>
+      <p className="mt-2 text-sm text-muted">Your upcoming sessions. Times are UK time.</p>
+      {shifts ? <MyShiftsList shifts={shifts} />
+        : <p role="alert" className="mt-6 rounded-lg border border-red bg-red/10 p-3 text-sm font-semibold text-ink">{efnMessage(r.status, r.data.error)}</p>}
+    </main>;
+  }
   return <main className="py-8 min-w-0">
     <Link href="/dashboard" className="text-sm font-bold text-blue">← Dashboard</Link>
     <h1 className="mt-4 text-3xl font-black">My Shifts</h1>

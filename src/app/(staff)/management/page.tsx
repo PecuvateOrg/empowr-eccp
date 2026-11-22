@@ -5,6 +5,7 @@ import { getManagementOverview } from "@/lib/management";
 import { ProvisionCoachForm } from "./ProvisionCoachForm";
 import { CoachingGradeEditor } from "./CoachingGradeEditor";
 import { coachingGradeEnabled } from "@/lib/coaching-grade";
+import { shiftScreensEnabled } from "@/lib/efn-staffing";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -44,12 +45,11 @@ export default async function ManagementPage() {
       </section>
       <p className="mt-2 text-xs text-muted">These figures use the existing coach roster and assessment records. They are not onboarding or compliance clearance totals.</p>
 
-      <section className="mt-6 rounded-xl border border-border bg-card p-5">
-        <h2 className="text-xl font-bold">Coach Scheduling</h2>
-        <p className="mt-2 text-sm text-muted">Explore session staffing and coach allocation using fictional examples.</p>
-        <Link href="/management/scheduling-preview" className="mt-3 inline-block text-sm font-semibold text-blue">Open scheduling example →</Link>
-        <p className="mt-2 text-xs text-muted">Example only — no live changes</p>
-      </section>
+      {shiftScreensEnabled() && <section className="mt-6 rounded-xl border border-border bg-card p-5">
+        <h2 className="text-xl font-bold">Staffing</h2>
+        <p className="mt-2 text-sm text-muted">Add places to upcoming sessions, assign coaches and arrange cover.</p>
+        <Link href="/management/staffing" className="mt-3 inline-block text-sm font-semibold text-blue">Open staffing →</Link>
+      </section>}
       <section className="mt-9" aria-labelledby="management-tools">
         <h2 id="management-tools" className="text-xl font-bold">Training &amp; Compliance</h2>
         <p className="mt-1 text-sm text-muted">Coach onboarding, safeguarding, training, deadlines and reminders in one place. These tools currently use fictional example data.</p>
