@@ -1,6 +1,6 @@
--- REVIEW ONLY. Apply after ops/staffing-schema-proposed.sql,
--- ops/staffing-assign-function-proposed.sql and
--- ops/staffing-cancel-cover-functions-proposed.sql, after maintainer approval.
+-- APPLIED to the live database 2026-11-22 (owner approval) as Empowr CIC
+-- projects/supabase/migrations/20261122183001-04_eccp_staffing_*.sql. Keep this
+-- file in step with those migrations; change live only through a new migration.
 --
 -- Members schedule -> eccp.staffing_sessions. These functions are the only
 -- writers of sessions and sync runs, and the only home of the matching rules

@@ -1,5 +1,6 @@
--- REVIEW ONLY. Apply through schema-of-record migration after approval.
--- Live check 2026-11-22: eccp.coaches.id is uuid; none of these tables exist yet.
+-- APPLIED to the live database 2026-11-22 (owner approval) as Empowr CIC
+-- projects/supabase/migrations/20261122183001-04_eccp_staffing_*.sql. Keep this
+-- file in step with those migrations; change live only through a new migration.
 begin;
 
 create extension if not exists btree_gist with schema extensions;

@@ -1,6 +1,6 @@
 # Staffing integration — maintainer review
 
-Review PR #74 together with reconciliation PR #76. No production migration or flag activation is requested by this document.
+**Applied to the live database 2026-11-22** with the owner's approval (migrations `20261122183001`–`04` in the Empowr CIC hub), after a staging run on `supabase/postgres:17.6.1.178`. #74 and #76 are merged. The admin Shifts page is behind `ECCP_STAFFING_ENABLED`; the Members sync stays off until `ECCP_STAFFING_SYNC_ENABLED` and its schedule are switched on with owner approval.
 
 ## Settled in the proposed SQL (tested 2026-11-22 on a disposable Postgres 17)
 - Coach primary key is `uuid` (checked on the live database); the dynamic type lookup is removed.
