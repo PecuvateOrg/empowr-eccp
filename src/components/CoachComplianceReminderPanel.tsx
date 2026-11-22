@@ -31,9 +31,6 @@ export function CoachComplianceReminderPanel({ coachId }: { coachId: string }) {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setData(null);
-    setError("");
     fetch(`/api/management/compliance?coachId=${encodeURIComponent(coachId)}`, { cache: "no-store" })
       .then(jsonOrThrow)
       .then(result => { if (active) setData(result as CoachData); })
