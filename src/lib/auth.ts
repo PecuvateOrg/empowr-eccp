@@ -5,7 +5,7 @@ import { hasCoachPermission, type AdminRole, type CoachPermission } from "./coac
 const SESSION_DURATION_DAYS = 30;
 const CODE_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
-export const SESSION_COOKIE = "eccp_session";
+const SESSION_COOKIE = "eccp_session";
 
 export interface Coach {
   id: string;
