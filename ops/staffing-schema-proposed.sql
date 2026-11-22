@@ -63,11 +63,36 @@ create table eccp.shift_assignment_events (
  id bigint generated always as identity primary key,
  assignment_id uuid not null references eccp.shift_assignments(id) on delete restrict,
  actor_id uuid references eccp.coaches(id) on delete restrict,
- event_type text not null check (event_type in ('created','updated','cancelled')),
+ event_type text not null check (event_type in ('created','updated','cancelled',
+  'cover_requested','cover_accepted','cover_declined','cover_withdrawn','cover_approved')),
  details jsonb not null default '{}'::jsonb,
  created_at timestamptz not null default now()
 );
 create index shift_assignment_events_assignment_idx on eccp.shift_assignment_events(assignment_id);
+
+-- Cover: the named replacement accepts, then management approves the swap.
+create table eccp.shift_cover_requests (
+ id uuid primary key default gen_random_uuid(),
+ assignment_id uuid not null references eccp.shift_assignments(id) on delete restrict,
+ replacement_coach_id uuid not null references eccp.coaches(id) on delete restrict,
+ requested_by uuid not null references eccp.coaches(id) on delete restrict,
+ note text check (length(note) <= 500),
+ state text not null default 'requested'
+  check (state in ('requested','accepted','declined','withdrawn','approved')),
+ accepted_at timestamptz,
+ approved_by uuid references eccp.coaches(id) on delete restrict,
+ approved_at timestamptz,
+ replacement_assignment_id uuid references eccp.shift_assignments(id) on delete restrict,
+ created_at timestamptz not null default now(),
+ updated_at timestamptz not null default now(),
+ check ((state in ('accepted','approved')) = (accepted_at is not null)),
+ check ((state = 'approved') = (approved_by is not null and approved_at is not null
+  and replacement_assignment_id is not null))
+);
+-- At most one open request per assignment.
+create unique index shift_cover_requests_open_unique on eccp.shift_cover_requests(assignment_id)
+ where state in ('requested','accepted');
+create index shift_cover_requests_replacement_idx on eccp.shift_cover_requests(replacement_coach_id);
 
 create table eccp.staffing_sync_runs (
  id uuid primary key default gen_random_uuid(),
@@ -88,6 +113,8 @@ begin new.updated_at := now(); return new; end $$;
 create trigger staffing_sessions_touch before update on eccp.staffing_sessions
  for each row execute function eccp.staffing_touch_updated_at();
 create trigger shift_assignments_touch before update on eccp.shift_assignments
+ for each row execute function eccp.staffing_touch_updated_at();
+create trigger shift_cover_requests_touch before update on eccp.shift_cover_requests
  for each row execute function eccp.staffing_touch_updated_at();
 
 -- Assignment times always come from the session, never from the caller.
@@ -127,14 +154,16 @@ alter table eccp.staffing_sessions enable row level security;
 alter table eccp.shift_assignments enable row level security;
 alter table eccp.shift_assignment_events enable row level security;
 alter table eccp.staffing_sync_runs enable row level security;
-revoke all on eccp.staffing_sessions, eccp.shift_assignments, eccp.shift_assignment_events, eccp.staffing_sync_runs
+alter table eccp.shift_cover_requests enable row level security;
+revoke all on eccp.staffing_sessions, eccp.shift_assignments, eccp.shift_assignment_events, eccp.staffing_sync_runs,
+ eccp.shift_cover_requests
  from public, anon, authenticated;
 grant select, insert, update on eccp.staffing_sessions, eccp.staffing_sync_runs to service_role;
 -- Assignments and their events are written only by reviewed security-definer
 -- functions (ops/staffing-assign-function-proposed.sql), so every change is audited.
-grant select on eccp.shift_assignments, eccp.shift_assignment_events to service_role;
+grant select on eccp.shift_assignments, eccp.shift_assignment_events, eccp.shift_cover_requests to service_role;
 revoke all on function eccp.staffing_touch_updated_at(), eccp.shift_assignment_copy_times(),
  eccp.staffing_session_propagate_times(), eccp.shift_assignment_events_append_only() from public;
 commit;
--- Writer: ops/staffing-assign-function-proposed.sql (apply after this file).
--- Cancellation and cover need their own audited functions before go-live.
+-- Writers, applied after this file in order: ops/staffing-assign-function-proposed.sql,
+-- ops/staffing-cancel-cover-functions-proposed.sql.

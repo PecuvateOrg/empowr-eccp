@@ -16,7 +16,13 @@ Review PR #74 together with reconciliation PR #76. No production migration or fl
 Open decisions for the writer:
 - **PROPOSED, not yet decided:** a certificate valid on the session date is required.
 - Not enforced: first aid for head coaches (no first-aid record in the database), availability, child count/coverage, more than one head per session.
-- Still needed before go-live: audited cancel and cover functions.
+
+## Cancel and cover (ops/staffing-cancel-cover-functions-proposed.sql)
+- `staffing_cancel_assignment` (admin, reason required): cancels a shift and withdraws its open cover request; repeating it does nothing.
+- `staffing_request_cover` → `staffing_accept_cover` (only the named replacement, eligibility re-checked) → `staffing_approve_cover` (admin): original cancelled and replacement created with the same role and pay terms in one transaction; refused if the replacement would be double-booked, leaving everything unchanged. `staffing_close_cover`: the replacement declines, or the requester, the original coach or an admin withdraws.
+- One open cover request per shift. Assign and cover share `staffing_eligibility_error`, so the rules cannot drift apart.
+- **PROPOSED, not yet decided:** who may raise a cover request (the original coach for their own shift, or an admin).
+- Not built: editing a shift in place (role, pay terms). Cancel and re-assign instead.
 - Staging check: on Supabase the function owner must bypass RLS (Supabase `postgres` does).
 
 ## Required schema decisions

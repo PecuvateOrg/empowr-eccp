@@ -8,7 +8,9 @@ P="docker exec -i eccp-sqltest psql -U postgres -v ON_ERROR_STOP=1 -q"
 $P < ops/sql-tests/staffing-base.sql          # live table shapes + live message_actor
 $P < ops/staffing-schema-proposed.sql
 $P < ops/staffing-assign-function-proposed.sql
-bash ops/sql-tests/staffing-assign-tests.sh   # each line states the expected result
+$P < ops/staffing-cancel-cover-functions-proposed.sql
+bash ops/sql-tests/staffing-assign-tests.sh        # each line states the expected result
+bash ops/sql-tests/staffing-cancel-cover-tests.sh  # run second: reuses the assign data
 docker stop eccp-sqltest
 ```
 

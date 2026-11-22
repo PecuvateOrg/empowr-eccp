@@ -26,6 +26,29 @@
 --   ECS23 conflicting allocation (overlap or already assigned)
 begin;
 
+-- Shared eligibility rules for assignment and cover. Returns null when the
+-- coach may fill the role, otherwise the reason. p_starts null = grade only.
+create function eccp.staffing_eligibility_error(p_coach_id uuid, p_role text, p_starts timestamptz)
+returns text language plpgsql stable security definer set search_path = eccp, pg_temp as $$
+declare v_grade text;
+begin
+ select coaching_grade into v_grade from eccp.coaches where id = p_coach_id;
+ if not found then return 'coach not found'; end if;
+ if v_grade is null or not (
+   (v_grade = 'head_coach' and p_role in ('head','assistant'))
+   or (v_grade = 'assistant_coach' and p_role = 'assistant')
+   or (v_grade = 'junior_assistant_coach' and p_role = 'junior_assistant')) then
+  return 'coach not eligible for this role';
+ end if;
+ -- PROPOSED: certificate valid on the session date (UK time).
+ if p_starts is not null and not exists (select 1 from eccp.certificates c
+   where c.coach_id = p_coach_id and c.renews_at >= (p_starts at time zone 'Europe/London')::date) then
+  return 'coach has no certificate valid on the session date';
+ end if;
+ return null;
+end $$;
+revoke all on function eccp.staffing_eligibility_error(uuid,text,timestamptz) from public, anon, authenticated;
+
 create function eccp.staffing_assign_shifts(
  p_session_token text,
  p_coach_id uuid,
@@ -44,6 +67,7 @@ declare
  v_reason text := nullif(btrim(coalesce(p_reason,'')),'');
  v_paid boolean := coalesce(p_additional_paid,false);
  v_count integer;
+ v_err text;
 begin
  -- Who is calling comes from the session, never from the request.
  select actor_id, actor_role into v_actor, v_actor_role from eccp.message_actor(p_session_token);
@@ -82,12 +106,8 @@ begin
  select coaching_grade, admin_role::text into v_grade, v_coach_role
  from eccp.coaches where id = p_coach_id for share;
  if not found then raise exception 'coach not found' using errcode = 'ECS05'; end if;
- if v_grade is null or not (
-   (v_grade = 'head_coach' and p_role in ('head','assistant'))
-   or (v_grade = 'assistant_coach' and p_role = 'assistant')
-   or (v_grade = 'junior_assistant_coach' and p_role = 'junior_assistant')) then
-  raise exception 'coach not eligible for this role' using errcode = 'ECS05';
- end if;
+ v_err := eccp.staffing_eligibility_error(p_coach_id, p_role, null);
+ if v_err is not null then raise exception '%', v_err using errcode = 'ECS05'; end if;
 
  -- Lock sessions in id order so concurrent calls cannot deadlock and a sync
  -- cannot move or cancel a session mid-check.
@@ -99,11 +119,8 @@ begin
      or v_session.starts_at <= now() then
    raise exception 'session not assignable' using errcode = 'ECS04';
   end if;
-  -- PROPOSED: certificate valid on the session date (UK time).
-  if not exists (select 1 from eccp.certificates c where c.coach_id = p_coach_id
-                  and c.renews_at >= (v_session.starts_at at time zone 'Europe/London')::date) then
-   raise exception 'coach has no certificate valid on the session date' using errcode = 'ECS05';
-  end if;
+  v_err := eccp.staffing_eligibility_error(p_coach_id, p_role, v_session.starts_at);
+  if v_err is not null then raise exception '%', v_err using errcode = 'ECS05'; end if;
 
   begin
    insert into eccp.shift_assignments
