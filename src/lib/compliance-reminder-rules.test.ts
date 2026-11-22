@@ -1,4 +1,6 @@
-import { describe,it,expect } from "vitest";
+import { describe,it } from "node:test";
+import assert from "node:assert/strict";
+const expect = (actual: unknown) => ({ toBe(expected: unknown) { assert.equal(actual, expected); } });
 import {calendarDayDifference,isCalendarDate,reminderEligible,type ReminderRecord} from "./compliance-reminder-rules";
 const base:ReminderRecord={coachId:"coach-1",requirement:"safeguarding",status:"outstanding",deadline:"2026-12-01",renewalDate:"2027-12-01"};
 describe("compliance reminder rules",()=>{
