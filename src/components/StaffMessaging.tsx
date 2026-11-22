@@ -5,6 +5,7 @@ import { categoryLabel, priorityLabel, staffStatusLabel } from "@/lib/coach-mess
 
 type Thread = { id:string; title:string; category:string; status:string; priority:string; coachName:string; assigneeId:string|null; assigneeName:string|null; updatedAt:string; waitingForStaff:boolean };
 type Staff = { id:string; name:string };
+type Recipient = { id:string; name:string };
 type Entry = { id:string; authorName:string; fromCoach:boolean; body:string; internalNote:boolean; createdAt:string };
 type ApiError = { error?:string };
 async function jsonOrError(response:Response) {
@@ -25,6 +26,15 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
  const [staff,setStaff]=useState<Staff[]>([]);
  const [selected,setSelected]=useState<string|null>(initialSelected);
  const [search,setSearch]=useState("");
+ const [compose,setCompose]=useState(false);
+ const [recipients,setRecipients]=useState<Recipient[]>([]);
+ const [recipientId,setRecipientId]=useState("");
+ const [newTitle,setNewTitle]=useState("");
+ const [newCategory,setNewCategory]=useState("general");
+ const [newBody,setNewBody]=useState("");
+ const [creating,setCreating]=useState(false);
+ const [composeError,setComposeError]=useState("");
+ const newKey=useRef<string|null>(null);
  const [notesOpen,setNotesOpen]=useState(false);
  const [entries,setEntries]=useState<Entry[]>([]);
  const [loading,setLoading]=useState(true);
@@ -37,6 +47,18 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
  const pendingKey=useRef<string|null>(null);
  const current=threads.find(t=>t.id===selected);
  const filteredThreads=threads.filter(t=>`${t.title} ${t.coachName} ${t.category}`.toLowerCase().includes(search.toLowerCase()));
+ async function openCompose(){
+  setCompose(true);setComposeError("");
+  try {const r=await jsonOrError(await fetch("/api/management/messages/recipients",{cache:"no-store"})) as {recipients?:Recipient[]};setRecipients(r.recipients??[]);}
+  catch(e){setComposeError(e instanceof Error?e.message:"Unable to load recipients");}
+ }
+ async function startConversation(e:FormEvent<HTMLFormElement>){
+  e.preventDefault();if(creating)return;setCreating(true);setComposeError("");
+  const key=newKey.current??crypto.randomUUID();newKey.current=key;
+  try {const result=await jsonOrError(await fetch("/api/management/messages/new",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({recipientId,title:newTitle,category:newCategory,body:newBody,idempotencyKey:key})})) as {conversationId:string};
+   newKey.current=null;setCompose(false);setNewBody("");setNewTitle("");setRecipientId("");setSelected(result.conversationId);await refresh();
+  }catch(e){setComposeError(e instanceof Error?e.message:"Unable to start conversation");}finally{setCreating(false);}
+ }
  const refresh=useCallback(async()=>{
   try {
    {const q=await fetchQueue();setThreads(q.threads);setStaff(q.staff);}setError("");
@@ -87,7 +109,8 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
  }
  return <section className="mt-8 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.5fr)_minmax(0,0.9fr)]">
   <div className={`${selected?"hidden lg:block":""} min-w-0 rounded-2xl border border-border bg-card p-4`}>
-   <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-bold">Conversations</h2><button type="button" onClick={()=>void refresh()} className="text-sm font-bold text-blue underline">Refresh</button></div>
+   <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-bold">Conversations</h2><div className="flex gap-3"><button type="button" onClick={()=>void openCompose()} className="text-sm font-bold text-blue underline">New message</button><button type="button" onClick={()=>void refresh()} className="text-sm font-bold text-blue underline">Refresh</button></div></div>
+   {compose&&<form onSubmit={startConversation} className="mt-4 space-y-3 rounded-xl border border-border p-3"><h3 className="font-bold">New message</h3><label className="block text-sm">Coach<select required value={recipientId} onChange={e=>{setRecipientId(e.target.value);newKey.current=null;}} className="mt-1 w-full rounded-lg border p-2"><option value="">Choose a coach</option>{recipients.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label><label className="block text-sm">Subject<input required maxLength={120} value={newTitle} onChange={e=>{setNewTitle(e.target.value);newKey.current=null;}} className="mt-1 w-full rounded-lg border p-2"/></label><label className="block text-sm">Category<select value={newCategory} onChange={e=>{setNewCategory(e.target.value);newKey.current=null;}} className="mt-1 w-full rounded-lg border p-2">{["general","scheduling","training","other"].map(c=><option key={c} value={c}>{categoryLabel(c)}</option>)}</select></label><label className="block text-sm">Message<textarea required maxLength={10000} rows={4} value={newBody} onChange={e=>{setNewBody(e.target.value);newKey.current=null;}} className="mt-1 w-full rounded-lg border p-2"/></label>{composeError&&<p role="alert" className="text-sm text-red-dark">{composeError}</p>}<div className="flex gap-3"><button disabled={creating} className="rounded-lg bg-blue px-3 py-2 font-bold text-white disabled:opacity-50">{creating?"Sending…":"Start conversation"}</button><button type="button" onClick={()=>setCompose(false)}>Cancel</button></div></form>}
    <label className="mt-4 block text-sm font-bold">Search conversations<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Name or subject" className="mt-1 w-full rounded-lg border border-border p-2 font-normal" /></label>
    {loading?<p role="status" className="mt-4 text-sm">Loading inbox…</p>:threads.length===0?<p className="mt-4 text-sm text-muted">No coach enquiries yet.</p>:
    <ul className="mt-4 space-y-2">{filteredThreads.map(t=><li key={t.id}><button type="button" onClick={()=>{setSelected(t.id);setEntries([]);setMessage("");pendingKey.current=null;setSuccess("");}} aria-current={selected===t.id?"true":undefined} className={`w-full rounded-xl border p-3 text-left ${selected===t.id?"border-blue bg-blue-pale":"border-border hover:bg-cream"}`}>
@@ -113,7 +136,7 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
       <p className="whitespace-pre-wrap break-words text-sm">{entry.body}</p><p className="mt-2 text-xs text-muted">{new Date(entry.createdAt).toLocaleString("en-GB",{timeZone:"Europe/London",dateStyle:"medium",timeStyle:"short"})}</p>
      </article>)}
     </div>
-    <form onSubmit={submit} className="sticky bottom-0 mt-5 space-y-3 bg-card pt-3">
+    <form onSubmit={e=>{setInternal(false);void submit(e);}} className="sticky bottom-0 mt-5 space-y-3 bg-card pt-3">
      <label className="block text-sm font-bold" htmlFor="staff-message">Reply or add an internal note</label>
      <textarea id="staff-message" required rows={4} maxLength={10000} value={message} onChange={e=>{setMessage(e.target.value);pendingKey.current=null;}} className="w-full rounded-xl border border-border p-3" placeholder="Write a message…" />
      <p className="text-xs text-muted">For private staff notes, use the management-only panel.</p>
@@ -129,7 +152,7 @@ export function StaffMessaging({ canManage, initialSelected=null }: { canManage:
     <p className="mt-2 text-xs text-muted">Only staff can see these notes. They are never sent to the coach.</p>
     <button type="button" className="mt-3 text-sm font-semibold text-blue underline" onClick={()=>setNotesOpen(v=>!v)}>{notesOpen?"Hide notes":"Show notes"}</button>
     {notesOpen&&<div className="mt-3 max-h-72 space-y-2 overflow-y-auto">{entries.filter(e=>e.internalNote).length===0?<p className="text-sm text-muted">No internal notes yet.</p>:entries.filter(e=>e.internalNote).map(e=><article key={e.id} className="rounded-lg border border-border p-3 text-sm"><p className="font-semibold">{e.authorName}</p><p className="whitespace-pre-wrap break-words">{e.body}</p></article>)}</div>}
-    <form onSubmit={submit} className="mt-4 space-y-2"><label className="block text-sm font-semibold" htmlFor="internal-note">Add private note</label><textarea id="internal-note" rows={4} maxLength={10000} value={internal?message:""} onChange={e=>{setInternal(true);setMessage(e.target.value);pendingKey.current=null;}} onFocus={()=>setInternal(true)} className="w-full rounded-lg border border-border p-2" placeholder="Visible to staff only…" /><button disabled={sending||!internal||!message.trim()} className="rounded-lg bg-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-50">Save internal note</button></form>
+    <form onSubmit={e=>{setInternal(true);void submit(e);}} className="mt-4 space-y-2"><label className="block text-sm font-semibold" htmlFor="internal-note">Add private note</label><textarea id="internal-note" rows={4} maxLength={10000} value={internal?message:""} onChange={e=>{setInternal(true);setMessage(e.target.value);pendingKey.current=null;}} onFocus={()=>setInternal(true)} className="w-full rounded-lg border border-border p-2" placeholder="Visible to staff only…" /><button disabled={sending||!internal||!message.trim()} className="rounded-lg bg-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-50">Save internal note</button></form>
    </>}
   </aside>
  </section>;
