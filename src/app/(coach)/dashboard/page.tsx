@@ -6,6 +6,8 @@ import { getAttempts } from "@/lib/assessment";
 import { courseModules } from "@/lib/safeguarding-course";
 import { efn } from "@/lib/efn-client";
 import { coachUnreadCount } from "@/lib/coach-messages";
+import { coachingGradeEnabled, toCoachingGrade } from "@/lib/coaching-grade";
+import { getDb } from "@/lib/supabase";
 import { efnMessage, londonDate, shiftScreensEnabled, venueText, whenText } from "@/lib/efn-staffing";
 import type { CoachShift } from "@/app/(coach)/my-shifts/MyShiftsList";
 
@@ -23,6 +25,10 @@ export default async function CoachDashboardPage() {
  const pending = upcoming.filter(s => s.kind === "shift" && s.response === "pending").length;
  const messagingEnabled = process.env.ECCP_MESSAGING_ENABLED === "true";
  const unreadMessages = messagingEnabled ? await coachUnreadCount(coach.id).catch(() => null) : null;
+ // Only show the Head Coach-only requirement when a verified coaching grade is available.
+ const grade = coachingGradeEnabled()
+  ? toCoachingGrade((await getDb().from("coaches").select("coaching_grade").eq("id", coach.id).maybeSingle()).data?.coaching_grade)
+  : null;
  const completed = completedCount(progress);
  const total = courseModules.length;
  const passed = attempts.some(a => a.passed);
@@ -75,7 +81,7 @@ export default async function CoachDashboardPage() {
       </div>
       <span className="rounded-full bg-blue-pale px-3 py-1 text-sm font-bold text-blue-dark">{status}</span>
      </li>
-     {["First Aid training", "DBS check", "Additional training"].map(item => (
+     {[...(grade === "head_coach" ? ["First Aid training"] : []), "DBS check", "Additional training"].map(item => (
       <li key={item} className="flex flex-wrap items-center justify-between gap-2 p-3">
        <span className="font-semibold text-ink">{item}</span>
        <span className="rounded-full border border-border px-3 py-1 text-xs font-bold text-muted">Coming soon</span>
