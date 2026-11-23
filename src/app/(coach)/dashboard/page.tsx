@@ -4,11 +4,22 @@ import { can, getCurrentCoach } from "@/lib/auth";
 import { getProgress, completedCount } from "@/lib/progress";
 import { getAttempts } from "@/lib/assessment";
 import { courseModules } from "@/lib/safeguarding-course";
+import { efn } from "@/lib/efn-client";
+import { efnMessage, londonDate, shiftScreensEnabled, venueText, whenText } from "@/lib/efn-staffing";
+import type { CoachShift } from "@/app/(coach)/my-shifts/MyShiftsList";
+
+export const dynamic = "force-dynamic";
 
 export default async function CoachDashboardPage() {
  const coach = await getCurrentCoach();
  if (!coach) redirect("/login");
  const [progress, attempts] = await Promise.all([getProgress(coach.id), getAttempts(coach.id)]);
+ const shiftsEnabled = shiftScreensEnabled();
+ const shiftResult = shiftsEnabled ? await efn(`/shifts?from=${londonDate(-1)}`, { coachId: coach.id }) : null;
+ const shifts = shiftResult && Array.isArray(shiftResult.data.shifts) ? shiftResult.data.shifts as CoachShift[] : null;
+ const upcoming = (shifts ?? []).filter(s => s.sessionStatus !== "cancelled" && s.response !== "declined" && new Date(s.endsAt).getTime() > new Date(londonDate()).getTime()).sort((a,b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+ const nextShift = upcoming[0];
+ const pending = upcoming.filter(s => s.kind === "shift" && s.response === "pending").length;
  const completed = completedCount(progress);
  const total = courseModules.length;
  const passed = attempts.some(a => a.passed);
@@ -20,9 +31,20 @@ export default async function CoachDashboardPage() {
   <section className="mt-8 rounded-2xl border border-border bg-card p-6">
    <div className="flex flex-wrap items-center justify-between gap-3">
     <h2 className="text-xl font-bold text-ink">My Shifts</h2>
-    <span className="rounded-full bg-warm-white px-3 py-1 text-xs font-bold text-muted">Scheduling coming soon</span>
+    {shiftsEnabled && <Link className="text-sm font-bold text-blue hover:underline" href="/my-shifts">View all my shifts →</Link>}
    </div>
-   <p className="mt-3 text-sm text-muted">Your next assigned session, date, time and location will appear here when shift scheduling is connected.</p>
+   {!shiftsEnabled ? <p className="mt-3 text-sm text-muted">Shift scheduling is not enabled.</p>
+    : !shifts ? <p role="alert" className="mt-3 text-sm text-muted">{efnMessage(shiftResult?.status ?? 503, shiftResult?.data.error)}</p>
+    : <>
+      {nextShift ? <Link href="/my-shifts" className="mt-4 block rounded-xl border border-border p-4 hover:bg-blue-pale focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue">
+       <p className="text-xs font-bold uppercase tracking-wide text-muted">Next upcoming shift</p>
+       <h3 className="mt-2 font-bold text-ink">{nextShift.title}</h3>
+       <p className="mt-1 text-sm font-semibold text-blue">{whenText(nextShift.startsAt, nextShift.endsAt)}</p>
+       <p className="mt-1 text-sm text-muted">{venueText(nextShift.venue)} · {nextShift.role}</p>
+       <p className="mt-2 text-xs font-semibold text-muted">{nextShift.response === "pending" ? "Waiting for your answer" : nextShift.response === "accepted" ? "Accepted" : "Assigned"}</p>
+      </Link> : <p className="mt-3 text-sm text-muted">You have no upcoming shifts.</p>}
+      {pending > 0 && <Link href="/my-shifts" className="mt-3 inline-block text-sm font-bold text-blue hover:underline">{pending} {pending === 1 ? "shift is" : "shifts are"} waiting for your response →</Link>}
+     </>}
   </section>
   <div className="mt-6 grid gap-4 sm:grid-cols-2">
    <section className="rounded-2xl border border-border bg-card p-6">
