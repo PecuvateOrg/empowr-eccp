@@ -17,7 +17,7 @@ export default async function CoachDashboardPage() {
  const shiftsEnabled = shiftScreensEnabled();
  const shiftResult = shiftsEnabled ? await efn(`/shifts?from=${londonDate(-1)}`, { coachId: coach.id }) : null;
  const shifts = shiftResult && Array.isArray(shiftResult.data.shifts) ? shiftResult.data.shifts as CoachShift[] : null;
- const upcoming = (shifts ?? []).filter(s => s.sessionStatus !== "cancelled" && s.response !== "declined" && new Date(s.endsAt).getTime() > Date.now()).sort((a,b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+ const upcoming = (shifts ?? []).filter(s => s.sessionStatus !== "cancelled" && s.response !== "declined" && new Date(s.endsAt).getTime() > new Date(londonDate()).getTime()).sort((a,b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
  const nextShift = upcoming[0];
  const pending = upcoming.filter(s => s.kind === "shift" && s.response === "pending").length;
  const completed = completedCount(progress);
