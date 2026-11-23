@@ -4,7 +4,7 @@
 
 export type IconKey =
   | "home" | "course" | "training" | "certificate" | "shifts" | "messages" | "management"
-  | "coaches" | "inbox" | "onboarding" | "grading" | "compliance" | "switch" | "profile";
+  | "coaches" | "inbox" | "onboarding" | "grading" | "compliance" | "switch" | "profile" | "account";
 
 export type NavItem = { label: string; href: string; icon: IconKey; exact?: boolean };
 export type NavGroup = { heading: string; items: NavItem[] };
@@ -14,7 +14,7 @@ export type ShellNav = {
   home: string;
   groups: NavGroup[];
   tabs: string[]; // phone bottom bar: up to 4 hrefs, Menu is always added last
-  account?: NavItem; // foot block link (coach profile)
+  account: NavItem; // foot block: the person (sign-in, alerts), account-page.md
 };
 
 export const MAX_TABS = 4;
@@ -34,6 +34,7 @@ export function coachNav({ shifts, messaging, management }: Flags): ShellNav {
         { label: "Course", href: "/course", icon: "course" },
         { label: "Training", href: "/training", icon: "training" },
         { label: "Certificate", href: "/certificate", icon: "certificate" },
+        { label: "Profile", href: "/profile", icon: "profile" },
       ],
     },
     ...(work.length ? [{ heading: "My work", items: work }] : []),
@@ -47,7 +48,7 @@ export function coachNav({ shifts, messaging, management }: Flags): ShellNav {
     home: "/dashboard",
     groups,
     tabs: ["/dashboard", "/course", ...work.map((i) => i.href), "/certificate"].slice(0, MAX_TABS),
-    account: { label: "Profile", href: "/profile", icon: "profile" },
+    account: { label: "Account", href: "/account", icon: "account" },
   };
 }
 
@@ -74,6 +75,7 @@ export function staffNav({ shifts, messaging }: Omit<Flags, "management">): Shel
       { heading: "Switch", items: [{ label: "Coach view", href: "/dashboard", icon: "switch" }] },
     ],
     tabs: [...manage.map((i) => i.href), "/dashboard"].slice(0, MAX_TABS),
+    account: { label: "Account", href: "/management/account", icon: "account" },
   };
 }
 

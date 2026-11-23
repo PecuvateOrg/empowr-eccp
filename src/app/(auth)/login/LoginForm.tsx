@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { browserSupportsWebAuthn, startAuthentication } from "@simplewebauthn/browser";
 import { BrandMark } from "@/components/BrandMark";
+
+// Inlined at build time (see lib/passkeys.ts).
+const PASSKEYS = process.env.NEXT_PUBLIC_PASSKEYS_ENABLED === "true";
 
 export function LoginForm() {
   const router = useRouter();
@@ -29,6 +33,32 @@ export function LoginForm() {
       setStep("code");
     } else {
       setError("Something went wrong. Please try again.");
+    }
+  }
+
+  // Coach passkeys (Account page). No email needed: the device offers its own passkeys.
+  async function passkey() {
+    setBusy(true);
+    setError(null);
+    try {
+      if (!browserSupportsWebAuthn()) throw new Error("unsupported");
+      const options = await fetch("/api/auth/passkey/options", { method: "POST" });
+      if (!options.ok) throw new Error("options");
+      const response = await startAuthentication({ optionsJSON: await options.json() });
+      const done = await fetch("/api/auth/passkey/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(response),
+      });
+      const data = await done.json().catch(() => ({}));
+      if (!done.ok) {
+        setBusy(false);
+        return setError(data.error ?? "Something went wrong.");
+      }
+      router.push(data.redirectTo ?? "/dashboard");
+    } catch {
+      setBusy(false);
+      setError("Passkey sign-in was cancelled or isn't available on this device. Use the email code instead.");
     }
   }
 
@@ -83,6 +113,19 @@ export function LoginForm() {
           />
 
           <SubmitButton busy={busy} label="Send code" />
+          {PASSKEYS ? (
+            <>
+              <p className="mt-4 text-center text-sm text-ink/70">or</p>
+              <button
+                className="mt-4 min-h-11 w-full rounded-full border border-ink/40 bg-card px-6 py-3 font-extrabold text-ink hover:border-blue disabled:opacity-60"
+                disabled={busy}
+                onClick={passkey}
+                type="button"
+              >
+                Sign in with a passkey
+              </button>
+            </>
+          ) : null}
           {error ? <ErrorNote>{error}</ErrorNote> : null}
         </form>
       ) : (
