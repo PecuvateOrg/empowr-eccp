@@ -62,7 +62,7 @@ export default async function CoachDashboardPage() {
       <Link href="/messages#new-message" className="inline-flex min-h-11 items-center rounded-xl bg-blue px-4 py-2 text-sm font-bold text-white hover:bg-blue-dark">+ Start a New Message</Link>
       <Link href="/messages" className="inline-flex min-h-11 items-center rounded-xl border border-blue px-4 py-2 text-sm font-bold text-blue-dark hover:bg-blue-pale">Open Messages</Link>
      </div>
-    </>
+    </>}
    </section>
    <section className="rounded-2xl border border-border bg-card p-6">
     <h2 className="text-lg font-bold text-ink">My Training &amp; Compliance</h2>
