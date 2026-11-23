@@ -8,9 +8,9 @@ export default async function StaffMessagesPage({ searchParams }: { searchParams
  if (process.env.ECCP_MESSAGING_ENABLED !== "true") notFound();
  const actor=await getCurrentCoach();
  if (!actor || !can(actor,"view_management")) notFound();
- return <main className="py-10">
+ return <main>
   <p className="text-xs font-black uppercase tracking-widest text-red-dark">ECCP Management</p>
-  <h1 className="mt-3 text-3xl font-bold text-ink">Staff Inbox</h1>
+  <h1 className="mt-3 text-ink text-xl font-bold tracking-tight sm:text-2xl">Staff Inbox</h1>
   <p className="mt-2 max-w-2xl text-muted">Review coach enquiries, respond as the staff team and keep private internal notes. Only administrators can change priority and status.</p>
   <StaffMessaging canManage={can(actor,"change_roles")} initialSelected={uuid((await searchParams).c) ? (await searchParams).c! : null} />
   <section className="mt-6 rounded-2xl border border-border bg-card p-6">

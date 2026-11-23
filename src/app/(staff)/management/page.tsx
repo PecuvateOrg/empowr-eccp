@@ -28,11 +28,11 @@ export default async function ManagementPage() {
   const certified = roster.filter(item => item.certificate).length;
 
   return (
-    <main className="py-8">
+    <main>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-blue">ECCP Management</p>
-          <h1 className="mt-1 text-3xl font-black text-ink">Coach management</h1>
+          <h1 className="mt-1 text-ink text-xl font-bold tracking-tight sm:text-2xl">Coach management</h1>
           <p className="mt-2 text-sm text-muted">Find coach records, review training and access management tools.</p>
         </div>
         <a href="#coach-roster" className="rounded-lg border border-border px-4 py-2 text-sm font-bold text-blue">View coach roster</a>
