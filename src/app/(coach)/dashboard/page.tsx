@@ -5,6 +5,7 @@ import { getProgress, completedCount } from "@/lib/progress";
 import { getAttempts } from "@/lib/assessment";
 import { courseModules } from "@/lib/safeguarding-course";
 import { efn } from "@/lib/efn-client";
+import { coachUnreadCount } from "@/lib/coach-messages";
 import { efnMessage, londonDate, shiftScreensEnabled, venueText, whenText } from "@/lib/efn-staffing";
 import type { CoachShift } from "@/app/(coach)/my-shifts/MyShiftsList";
 
@@ -20,6 +21,8 @@ export default async function CoachDashboardPage() {
  const upcoming = (shifts ?? []).filter(s => s.sessionStatus !== "cancelled" && s.response !== "declined" && new Date(s.endsAt).getTime() > new Date(londonDate()).getTime()).sort((a,b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
  const nextShift = upcoming[0];
  const pending = upcoming.filter(s => s.kind === "shift" && s.response === "pending").length;
+ const messagingEnabled = process.env.ECCP_MESSAGING_ENABLED === "true";
+ const unreadMessages = messagingEnabled ? await coachUnreadCount(coach.id).catch(() => null) : null;
  const completed = completedCount(progress);
  const total = courseModules.length;
  const passed = attempts.some(a => a.passed);
@@ -49,8 +52,17 @@ export default async function CoachDashboardPage() {
   <div className="mt-6 grid gap-4 sm:grid-cols-2">
    <section className="rounded-2xl border border-border bg-card p-6">
     <h2 className="text-lg font-bold text-ink">My Messages</h2>
-    <p className="mt-2 text-sm text-muted">Team messages and session updates will appear here when messaging is enabled.</p>
-    <span className="mt-4 inline-flex rounded-full bg-warm-white px-4 py-2 text-sm font-bold text-muted">Coming soon</span>
+    {!messagingEnabled ? <p className="mt-2 text-sm text-muted">Messaging is not enabled yet.</p> : <>
+     {unreadMessages === null
+      ? <p role="status" className="mt-3 text-sm text-muted">Unable to check new messages right now.</p>
+      : <Link href="/messages" className="mt-3 block rounded-xl border border-border bg-blue-pale p-3 text-sm font-bold text-blue-dark hover:underline">
+       {unreadMessages > 0 ? `You have ${unreadMessages} new ${unreadMessages === 1 ? "message" : "messages"}` : "You're all caught up."}
+      </Link>}
+     <div className="mt-4 flex flex-wrap gap-2">
+      <Link href="/messages#new-message" className="inline-flex min-h-11 items-center rounded-xl bg-blue px-4 py-2 text-sm font-bold text-white hover:bg-blue-dark">+ Start a New Message</Link>
+      <Link href="/messages" className="inline-flex min-h-11 items-center rounded-xl border border-blue px-4 py-2 text-sm font-bold text-blue-dark hover:bg-blue-pale">Open Messages</Link>
+     </div>
+    </>}
    </section>
    <section className="rounded-2xl border border-border bg-card p-6">
     <h2 className="text-lg font-bold text-ink">My Training &amp; Compliance</h2>

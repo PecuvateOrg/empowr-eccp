@@ -89,7 +89,7 @@ export function CoachMessaging() {
  }
 
  return <>
-  <section className="mt-8 rounded-2xl border border-border bg-card p-5 sm:p-6" aria-labelledby="private-title">
+  <section id="new-message" className="mt-8 scroll-mt-6 rounded-2xl border border-border bg-card p-5 sm:p-6" aria-labelledby="private-title">
    <h2 id="private-title" className="text-xl font-bold">Message the staff team</h2>
    <p className="mt-2 text-sm text-muted">Your enquiry goes to the shared Staff Inbox. Staff will route it to the appropriate person. For urgent safeguarding concerns, use the separate safeguarding reporting process.</p>
    <form onSubmit={submit} className="mt-5 space-y-4">
