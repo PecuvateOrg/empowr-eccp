@@ -6,6 +6,7 @@ import {
   canUsePasskeys, finishRegistration, listPasskeys, passkeysEnabled, registrationOptions, removePasskey,
   type PasskeyListItem,
 } from "@/lib/passkeys";
+import { ALERT_KINDS, setAlertSetting, type AlertKind } from "@/lib/push";
 
 // Every action acts only on the signed-in coach's own passkeys.
 
@@ -58,6 +59,19 @@ export async function deletePasskey(credentialId: string): Promise<{ ok: true } 
     return { ok: true };
   } catch (e) {
     console.error("passkey remove failed", e);
+    return FAILED;
+  }
+}
+
+// Which kinds of alert this coach wants (Account page). Coach accounts only.
+export async function setAlertKind(kind: AlertKind, on: boolean): Promise<{ ok: true } | { error: string }> {
+  const coach = await getCurrentCoach();
+  if (!coach || coach.admin_role !== "coach" || !(kind in ALERT_KINDS) || typeof on !== "boolean") return FAILED;
+  try {
+    await setAlertSetting(coach.id, kind, on);
+    return { ok: true };
+  } catch (e) {
+    console.error("alert setting save failed", e);
     return FAILED;
   }
 }

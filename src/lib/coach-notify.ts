@@ -1,9 +1,11 @@
 import "server-only";
 import { getDb } from "./supabase";
 import { sendCoachReplyEmail } from "./email";
+import { alertCoaches } from "./push";
 import { shouldEmailCoach } from "./messaging-alerts";
 
-// After a staff reply (never a note): email the coach(es) in the conversation,
+// After a staff reply (never a note): email the coach(es) in the conversation, and alert their
+// devices if they have reply alerts on (Account page),
 // at most once per 15 minutes. The coach_notified event is written BEFORE the
 // send, so two quick replies can't both email; a failed send is logged and
 // never fails the reply, which is already saved and shows as unread in ECCP.
@@ -32,4 +34,8 @@ export async function notifyCoachesOfReply(conversationId: string, staffId: stri
   for (const c of coaches) {
     await sendCoachReplyEmail(c.email, c.full_name).catch(e => console.error("[messages] coach reply email failed", c.id, e));
   }
+  // Never throws; a coach without alerts on simply gets the email.
+  await alertCoaches(coaches.map(c => c.id), "replies", {
+    title: "New reply from Empowr", body: "The ECCP staff team has replied to your message.", url: `/messages/${conversationId}`,
+  });
 }

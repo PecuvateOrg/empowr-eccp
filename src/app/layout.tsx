@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
+import { INSTALL_CAPTURE } from "@/lib/install-capture";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -21,6 +22,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={nunito.variable}>
+      <head>
+        {/* Install prompt + service worker on every visit (lib/install-capture.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: INSTALL_CAPTURE }} />
+      </head>
       <body className="font-sans antialiased">
         {children}
       </body>
