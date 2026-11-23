@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { can, getCurrentCoach } from "@/lib/auth";
-import { BrandMark } from "@/components/BrandMark";
-import { SignOutButton } from "@/components/SignOutButton";
 import { shiftScreensEnabled } from "@/lib/efn-staffing";
+import { AppShell } from "@/components/shell/AppShell";
+import { staffNav } from "@/components/shell/nav";
 
 // This layout IS the access control for every staff page beneath it — it does
 // NOT inherit (coach)/layout.tsx's gate, since a route group's layout only
@@ -20,20 +19,11 @@ export default async function StaffLayout({
   if (!can(coach, "view_management")) redirect("/course");
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-5 py-8 sm:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
-        <BrandMark href="/management" label="ECCP — Management" />
-        <div className="flex items-center gap-4 text-sm">
-          {shiftScreensEnabled() ? (<Link className="font-bold text-blue hover:text-blue-dark" href="/management/staffing">Staffing</Link>) : null}
-          {process.env.ECCP_MESSAGING_ENABLED === "true" ? (<Link className="font-bold text-blue hover:text-blue-dark" href="/management/messages">Staff Inbox</Link>) : null}
-          <Link className="font-bold text-blue hover:text-blue-dark" href="/course">
-            Coach view
-          </Link>
-          <span className="text-muted">{coach.full_name}</span>
-          <SignOutButton />
-        </div>
-      </header>
+    <AppShell
+      nav={staffNav({ shifts: shiftScreensEnabled(), messaging: process.env.ECCP_MESSAGING_ENABLED === "true" })}
+      email={coach.email}
+    >
       {children}
-    </div>
+    </AppShell>
   );
 }
