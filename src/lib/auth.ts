@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { getDb } from "./supabase";
 import { hasCoachPermission, type AdminRole, type CoachPermission } from "./coach-permissions";
 
-const SESSION_DURATION_DAYS = 30;
+export const SESSION_DURATION_DAYS = 30;
 const CODE_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 const SESSION_COOKIE = "eccp_session";

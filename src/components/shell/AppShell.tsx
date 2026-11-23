@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   ArrowLeftRight, Award, BookOpen, CalendarDays, ClipboardCheck, GraduationCap, House, Inbox,
-  LayoutDashboard, LogOut, Menu, MessageCircle, ShieldCheck, UserPlus, UserRound, Users, X,
+  KeyRound, LayoutDashboard, LogOut, Menu, MessageCircle, ShieldCheck, UserPlus, UserRound, Users, X,
   type LucideIcon,
 } from "lucide-react";
 import { isActive, type IconKey, type NavItem, type ShellNav } from "./nav";
@@ -16,7 +16,7 @@ const ICONS: Record<IconKey, LucideIcon> = {
   home: House, course: BookOpen, training: GraduationCap, certificate: Award, shifts: CalendarDays,
   messages: MessageCircle, management: LayoutDashboard, coaches: Users, inbox: Inbox,
   onboarding: UserPlus, grading: ClipboardCheck, compliance: ShieldCheck, switch: ArrowLeftRight,
-  profile: UserRound,
+  profile: UserRound, account: KeyRound,
 };
 
 // The console shell (Web Build Framework types/web-app/console-shell.md), Empowr skin: light
@@ -37,7 +37,7 @@ export function AppShell({
   const { open, close, toggle, trigger } = useSheet();
   const [signingOut, setSigningOut] = useState(false);
 
-  const all = [...nav.groups.flatMap((g) => g.items), ...(nav.account ? [nav.account] : [])];
+  const all = [...nav.groups.flatMap((g) => g.items), nav.account];
   const current = all.find((i) => isActive(i, pathname))
     ?? nav.groups.flatMap((g) => g.items).filter((i) => pathname.startsWith(i.href)).sort((a, b) => b.href.length - a.href.length)[0];
   const tabs = nav.tabs.map((h) => all.find((i) => i.href === h)).filter((i): i is NavItem => !!i);
@@ -122,7 +122,7 @@ export function AppShell({
 
         <div className="border-t border-border px-3 pb-5 pt-4">
           <p className="mb-2 truncate px-3 text-xs text-ink/65" title={email}>{email}</p>
-          {nav.account && row(nav.account, true)}
+          {row(nav.account, true)}
           <button
             type="button"
             onClick={signOut}
