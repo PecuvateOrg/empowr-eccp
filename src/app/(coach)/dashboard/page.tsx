@@ -6,6 +6,8 @@ import { getAttempts } from "@/lib/assessment";
 import { courseModules } from "@/lib/safeguarding-course";
 import { efn } from "@/lib/efn-client";
 import { coachUnreadCount } from "@/lib/coach-messages";
+import { coachingGradeEnabled, toCoachingGrade } from "@/lib/coaching-grade";
+import { getDb } from "@/lib/supabase";
 import { efnMessage, londonDate, shiftScreensEnabled, venueText, whenText } from "@/lib/efn-staffing";
 import type { CoachShift } from "@/app/(coach)/my-shifts/MyShiftsList";
 
@@ -23,6 +25,10 @@ export default async function CoachDashboardPage() {
  const pending = upcoming.filter(s => s.kind === "shift" && s.response === "pending").length;
  const messagingEnabled = process.env.ECCP_MESSAGING_ENABLED === "true";
  const unreadMessages = messagingEnabled ? await coachUnreadCount(coach.id).catch(() => null) : null;
+ // Only show the Head Coach-only requirement when a verified coaching grade is available.
+ const grade = coachingGradeEnabled()
+  ? toCoachingGrade((await getDb().from("coaches").select("coaching_grade").eq("id", coach.id).maybeSingle()).data?.coaching_grade)
+  : null;
  const completed = completedCount(progress);
  const total = courseModules.length;
  const passed = attempts.some(a => a.passed);
@@ -66,11 +72,23 @@ export default async function CoachDashboardPage() {
    </section>
    <section className="rounded-2xl border border-border bg-card p-6">
     <h2 className="text-lg font-bold text-ink">My Training &amp; Compliance</h2>
-    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-     <span className="font-semibold text-ink">Safeguarding</span>
-     <span className="rounded-full bg-blue-pale px-3 py-1 text-sm font-bold text-blue-dark">{status}</span>
-    </div>
-    <p className="mt-2 text-sm text-muted">{completed} of {total} modules complete. View courses, certificates and compliance requirements.</p>
+    <p className="mt-2 text-sm text-muted">See what you have completed and what is being introduced next.</p>
+    <ul className="mt-4 divide-y divide-border rounded-xl border border-border" aria-label="Training and compliance overview">
+     <li className="flex flex-wrap items-center justify-between gap-2 p-3">
+      <div>
+       <p className="font-semibold text-ink">Safeguarding training</p>
+       <p className="text-xs text-muted">{passed ? "Assessment passed" : `${completed} of ${total} modules complete`}</p>
+      </div>
+      <span className="rounded-full bg-blue-pale px-3 py-1 text-sm font-bold text-blue-dark">{status}</span>
+     </li>
+     {[...(grade === "head_coach" ? ["First Aid training"] : []), "DBS check", "Additional training"].map(item => (
+      <li key={item} className="flex flex-wrap items-center justify-between gap-2 p-3">
+       <span className="font-semibold text-ink">{item}</span>
+       <span className="rounded-full border border-border px-3 py-1 text-xs font-bold text-muted">Coming soon</span>
+      </li>
+     ))}
+    </ul>
+    <p className="mt-3 text-xs text-muted">Coming soon means tracking is not available yet; it does not indicate missing or failed compliance.</p>
     <Link className="mt-4 inline-flex rounded-full border border-blue px-4 py-2 text-sm font-bold text-blue-dark hover:bg-blue-pale" href="/training">Open Training &amp; Compliance</Link>
    </section>
    <section className="rounded-2xl border border-border bg-card p-6">
