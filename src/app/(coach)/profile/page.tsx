@@ -16,11 +16,11 @@ export default async function CoachProfilePage() {
     : undefined;
 
   return (
-    <main className="mx-auto w-full max-w-2xl py-10">
+    <main className="mx-auto w-full max-w-2xl">
       <Link href="/dashboard" className="text-sm font-semibold text-blue hover:underline">
         Back to coach portal
       </Link>
-      <h1 className="mt-6 text-3xl font-bold">My coach profile</h1>
+      <h1 className="mt-6 text-xl font-bold tracking-tight sm:text-2xl">My coach profile</h1>
       <p className="mt-2 text-muted">
         Review your account details and prepare your contact and emergency contact information.
       </p>

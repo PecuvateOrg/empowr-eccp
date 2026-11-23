@@ -38,7 +38,7 @@ export default async function ModulePage({
   const next = courseModules.find((m) => m.order === courseModule.order + 1);
 
   return (
-    <main className="py-10">
+    <main>
       <Link
         className="inline-flex items-center gap-2 text-sm font-bold text-blue hover:text-blue-dark"
         href="/course"
@@ -50,7 +50,7 @@ export default async function ModulePage({
       <p className="mt-6 text-xs font-black uppercase tracking-[0.18em] text-red-dark">
         {courseModule.label} · {courseModule.order} of {courseModules.length}
       </p>
-      <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight text-ink sm:text-4xl">
+      <h1 className="mt-3 text-ink text-xl font-bold tracking-tight sm:text-2xl">
         {courseModule.title}
       </h1>
       <p className="mt-3 text-lg leading-8 text-muted">{courseModule.eyebrow}</p>

@@ -8,7 +8,7 @@ export function ComingSoonCourse({ slug }: { slug: string }) {
   if (!course || course.status !== "coming-soon") notFound();
 
   return (
-    <main className="py-10">
+    <main>
       <Link
         className="inline-flex items-center gap-1.5 text-sm font-bold text-blue hover:text-blue-dark"
         href="/course"
@@ -21,7 +21,7 @@ export function ComingSoonCourse({ slug }: { slug: string }) {
         <Clock aria-hidden="true" className="size-3.5" />
         Coming soon
       </p>
-      <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight text-ink sm:text-5xl">
+      <h1 className="mt-4 text-ink text-xl font-bold tracking-tight sm:text-2xl">
         {course.title}
       </h1>
       <p className="mt-4 max-w-2xl text-lg leading-8 text-muted">

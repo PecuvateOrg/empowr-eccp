@@ -24,11 +24,11 @@ export default async function CertificatePage() {
   const certificate = await getCertificateForCoach(coach.id);
 
   return (
-    <main className="py-10">
+    <main>
       <p className="text-xs font-black uppercase tracking-[0.18em] text-red-dark">
         Empowr: Safeguarding for Roller Skating Coaches
       </p>
-      <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight text-ink sm:text-5xl">
+      <h1 className="mt-4 text-ink text-xl font-bold tracking-tight sm:text-2xl">
         Your certificate
       </h1>
 

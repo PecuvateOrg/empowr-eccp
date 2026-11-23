@@ -16,9 +16,9 @@ export default async function CoachConversationPage({ params }: { params: Promis
  if (!uuid(id)) notFound();
  const thread = await openCoachThread(coach.id, id);
  if (!thread) notFound();
- return <main className="py-10">
+ return <main>
   <Link href="/messages" className="text-sm font-semibold text-blue hover:underline">Back to my messages</Link>
-  <h1 className="mt-6 break-words text-2xl font-bold text-ink sm:text-3xl">{thread.title}</h1>
+  <h1 className="mt-6 break-words text-ink text-xl font-bold tracking-tight sm:text-2xl">{thread.title}</h1>
   <p className="mt-2 text-sm text-muted">{categoryLabel(thread.category)} · {coachStatusLabel(thread.status)}</p>
   <ol className="mt-6 space-y-3" aria-label="Messages">
    {thread.entries.map(e => <li key={e.id} className={"rounded-xl border p-4 " + (e.mine ? "border-border bg-card sm:ml-10" : "border-blue/30 bg-blue/5 sm:mr-10")}>
