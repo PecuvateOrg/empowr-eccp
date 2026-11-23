@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getCurrentCoach } from "@/lib/auth";
 import { CoachProfileForm } from "@/components/CoachProfileForm";
 import { CoachAvailabilityForm } from "@/components/CoachAvailabilityForm";
-import { InstallECCPApp } from "@/components/InstallECCPApp";
 import { getDb } from "@/lib/supabase";
 import { coachingGradeEnabled, coachingGradeLabel, toCoachingGrade } from "@/lib/coaching-grade";
 
@@ -45,8 +44,6 @@ export default async function CoachProfilePage() {
           Your account email is linked to the account you signed in with. To use a separate coach email, sign out and use that coach account. Admin changes must be verified against the correct account before updating any email.
         </p>
       </section>
-
-      <InstallECCPApp />
       <CoachProfileForm />
       <section id="availability" className="mt-8 scroll-mt-6 rounded-xl border border-border p-6">
         <h2 className="text-lg font-bold">My availability</h2>
