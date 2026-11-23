@@ -18,17 +18,17 @@ export default async function MyShifts(){
     // Shifts come from EFN, the staffing engine; ECCP only shows them.
     const r = await efn(`/shifts?from=${londonDate(-1)}`, { coachId: coach.id });
     const shifts = Array.isArray(r.data.shifts) ? r.data.shifts as CoachShift[] : null;
-    return <main className="py-8 min-w-0">
+    return <main className=" min-w-0">
       <Link href="/dashboard" className="text-sm font-bold text-blue">← Dashboard</Link>
-      <h1 className="mt-4 text-3xl font-black">My Shifts</h1>
+      <h1 className="mt-4 text-xl font-bold tracking-tight sm:text-2xl">My Shifts</h1>
       <p className="mt-2 text-sm text-muted">Your upcoming sessions. Times are UK time.</p>
       {shifts ? <MyShiftsList shifts={shifts} />
         : <p role="alert" className="mt-6 rounded-lg border border-red bg-red/10 p-3 text-sm font-semibold text-ink">{efnMessage(r.status, r.data.error)}</p>}
     </main>;
   }
-  return <main className="py-8 min-w-0">
+  return <main className=" min-w-0">
     <Link href="/dashboard" className="text-sm font-bold text-blue">← Dashboard</Link>
-    <h1 className="mt-4 text-3xl font-black">My Shifts</h1>
+    <h1 className="mt-4 text-xl font-bold tracking-tight sm:text-2xl">My Shifts</h1>
     <p className="mt-2 text-sm text-muted">Coming soon — your assigned sessions, cover requests and calendar will appear here when scheduling is connected.</p>
     <section className="mt-6 space-y-3" aria-label="Example shifts">
       <h2 className="text-xl font-bold">Example upcoming shifts</h2>

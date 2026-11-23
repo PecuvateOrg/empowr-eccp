@@ -13,9 +13,9 @@ export default async function CoachDashboardPage() {
  const total = courseModules.length;
  const passed = attempts.some(a => a.passed);
  const status = passed ? "Completed" : completed === 0 ? "Not started" : "In progress";
- return <main className="py-10">
+ return <main>
   <p className="text-xs font-black uppercase tracking-widest text-red-dark">Empowr Certified Coaching Programme</p>
-  <h1 className="mt-3 text-3xl font-bold text-ink">Welcome back, {coach.full_name.split(" ")[0]}!</h1>
+  <h1 className="mt-3 text-ink text-xl font-bold tracking-tight sm:text-2xl">Welcome back, {coach.full_name.split(" ")[0]}!</h1>
   <p className="mt-3 max-w-3xl text-muted">Your coaching hub — check shifts, stay connected and keep your training up to date.</p>
   <section className="mt-8 rounded-2xl border border-border bg-card p-6">
    <div className="flex flex-wrap items-center justify-between gap-3">

@@ -13,9 +13,9 @@ export default async function MyTrainingPage() {
  const completed = completedCount(progress);
  const passed = attempts.some(a => a.passed);
  const status = passed ? "Completed" : completed === 0 ? "Not started" : "In progress";
- return <main className="py-10">
+ return <main>
   <Link href="/dashboard" className="text-sm font-semibold text-blue hover:underline">Back to coach portal</Link>
-  <h1 className="mt-5 text-3xl font-bold text-ink">My Training &amp; Compliance</h1>
+  <h1 className="mt-5 text-ink text-xl font-bold tracking-tight sm:text-2xl">My Training &amp; Compliance</h1>
   <p className="mt-2 max-w-2xl text-muted">Your Empowr coaching courses, certificates and compliance requirements in one place.</p>
   <section className="mt-8 rounded-2xl border border-border bg-card p-6">
    <h2 className="text-xl font-bold text-ink">Coach Onboarding — Coming Soon</h2>
