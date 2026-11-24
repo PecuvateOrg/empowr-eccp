@@ -9,11 +9,16 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: unknown): v is string => typeof v === "string" && UUID.test(v);
 
 /** Coach actions ECCP forwards: POST /shifts/:id/{response|withdraw}. */
-export const COACH_ACTIONS = ["response", "withdraw"] as const;
+export const COACH_ACTIONS = ["response", "withdraw", "check-in", "confirm-attendance"] as const;
+
+/** Check-in screens and reminders (EFN must also have EFN_CHECKIN_ENABLED). */
+export const checkInEnabled = (env: Record<string, string | undefined> = process.env) =>
+  shiftScreensEnabled(env) && env.ECCP_CHECKIN_ENABLED === "true";
 /** Staff actions ECCP forwards: POST /staff/{sessions|positions}/:id/<action>. */
 const STAFF_ACTIONS: Record<string, readonly string[]> = {
   sessions: ["positions", "review"],
   positions: ["assign", "cover"],
+  tasks: ["attendance"],
 };
 export function staffPath(parts: string[]): string | null {
   const [kind, id, action] = parts;
@@ -46,6 +51,16 @@ const CODES: Record<string, string> = {
   young_worker_night: "Under-18s can't work between 22:00 and 06:00.",
   young_worker_hours: "That would take this under-18 over 8 hours that day or 40 hours that week.",
   bad_date: "Those dates aren't valid.",
+  check_in_off: "Check-in isn't switched on yet.",
+  outside_check_in_window: "Check-in opens 30 minutes before the session and closes when it ends.",
+  outside_confirm_window: "You can confirm a shift up to 24 hours after it ends. After that, staff decide.",
+  attendance_already_set: "Attendance for this shift is already recorded.",
+  shift_not_accepted: "Accept the shift first.",
+  reason_required: "Please give a reason.",
+  payment_locked: "This shift has already gone for payment, so it can't be changed here.",
+  shift_withdrawn: "This shift was withdrawn.",
+  session_not_started: "This session hasn't started yet.",
+  not_head_coach: "Only the session's Head Coach can do this.",
 };
 const GENERIC = "Scheduling is unavailable. Try again shortly.";
 export function efnMessage(status: number, error: unknown): string {

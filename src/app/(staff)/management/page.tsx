@@ -5,7 +5,7 @@ import { getManagementOverview } from "@/lib/management";
 import { ProvisionCoachForm } from "./ProvisionCoachForm";
 import { CoachingGradeEditor } from "./CoachingGradeEditor";
 import { coachingGradeEnabled } from "@/lib/coaching-grade";
-import { shiftScreensEnabled } from "@/lib/efn-staffing";
+import { checkInEnabled, shiftScreensEnabled } from "@/lib/efn-staffing";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -49,6 +49,7 @@ export default async function ManagementPage() {
         <h2 className="text-xl font-bold">Staffing</h2>
         <p className="mt-2 text-sm text-muted">Add places to upcoming sessions, assign coaches and arrange cover.</p>
         <Link href="/management/staffing" className="mt-3 inline-block text-sm font-semibold text-blue">Open staffing →</Link>
+        {checkInEnabled() && <Link href="/management/attendance" className="mt-3 ml-4 inline-block text-sm font-semibold text-blue">Open attendance →</Link>}
       </section>}
       <section className="mt-9" aria-labelledby="management-tools">
         <h2 id="management-tools" className="text-xl font-bold">Training &amp; Compliance</h2>

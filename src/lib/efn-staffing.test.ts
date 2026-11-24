@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { efnMessage, londonDate, shiftScreensEnabled, skippedText, staffPath, whenText } from "./efn-staffing";
+import { checkInEnabled, efnMessage, londonDate, shiftScreensEnabled, skippedText, staffPath, whenText } from "./efn-staffing";
 
 const ID = "00000000-0000-4000-8000-000000000001";
 
@@ -10,7 +10,15 @@ test("screens are off unless the flag is exactly 'true'", () => {
   assert.equal(shiftScreensEnabled({ ECCP_SHIFTS_ENABLED: "true" }), true);
 });
 
-test("only the four staff actions are forwarded", () => {
+test("check-in needs both flags", () => {
+  assert.equal(checkInEnabled({ ECCP_CHECKIN_ENABLED: "true" }), false);
+  assert.equal(checkInEnabled({ ECCP_SHIFTS_ENABLED: "true" }), false);
+  assert.equal(checkInEnabled({ ECCP_SHIFTS_ENABLED: "true", ECCP_CHECKIN_ENABLED: "true" }), true);
+});
+
+test("only the five staff actions are forwarded", () => {
+  assert.equal(staffPath(["tasks", ID, "attendance"]), `/staff/tasks/${ID}/attendance`);
+  assert.equal(staffPath(["tasks", ID, "hours"]), null, "hours and pay are never reachable from ECCP staff screens");
   assert.equal(staffPath(["sessions", ID, "positions"]), `/staff/sessions/${ID}/positions`);
   assert.equal(staffPath(["sessions", ID, "review"]), `/staff/sessions/${ID}/review`);
   assert.equal(staffPath(["positions", ID, "assign"]), `/staff/positions/${ID}/assign`);

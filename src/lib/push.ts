@@ -11,7 +11,7 @@ export const pushEnabled = Boolean(VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE
 
 export const ALERT_KINDS = {
   replies: { label: "Replies from the staff team", hint: "When Empowr staff answer one of your messages." },
-  shifts: { label: "New shifts", hint: "When staff put you on a session in ECCP." },
+  shifts: { label: "Shifts and check-in", hint: "When staff put you on a session, and reminders to check in on the day." },
 } as const;
 export type AlertKind = keyof typeof ALERT_KINDS;
 export type AlertSettings = Record<AlertKind, boolean>;

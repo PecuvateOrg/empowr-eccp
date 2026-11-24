@@ -6,11 +6,11 @@ import "server-only";
 // the coach path can never reach the staff endpoints. Response bodies hold names: never log them.
 
 const BASE = "https://efn-dashboard.empowrcic.org/api/eccp/v1";
-export type As = { coachId: string } | { staffId: string };
+export type As = { coachId: string } | { staffId: string } | { system: string };
 export type EfnResult = { status: number; data: Record<string, unknown> };
 
 export async function efn(path: string, as: As, init: { method?: "GET" | "POST"; body?: unknown } = {}): Promise<EfnResult> {
-  const staff = "staffId" in as;
+  const staff = "staffId" in as || "system" in as;
   const key = staff ? process.env.ECCP_EFN_STAFF_API_KEY : process.env.ECCP_EFN_API_KEY;
   if (!key) return { status: 503, data: { error: "not_configured" } };
   try {
@@ -18,7 +18,7 @@ export async function efn(path: string, as: As, init: { method?: "GET" | "POST";
       method: init.method ?? "GET",
       headers: {
         Authorization: `Bearer ${key}`,
-        ...(staff ? { "X-ECCP-Staff-Id": as.staffId } : { "X-ECCP-Coach-Id": as.coachId }),
+        ...("staffId" in as ? { "X-ECCP-Staff-Id": as.staffId } : "system" in as ? { "X-ECCP-System": as.system } : { "X-ECCP-Coach-Id": as.coachId }),
         ...(init.body === undefined ? {} : { "Content-Type": "application/json" }),
       },
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
