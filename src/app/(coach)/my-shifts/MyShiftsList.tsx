@@ -6,7 +6,7 @@ import { venueText, whenText, type Venue } from "@/lib/efn-staffing";
 export type CoachShift = {
   id: string; kind: "shift" | "training"; role: string; title: string; startsAt: string; endsAt: string; venue: Venue | null;
   sessionStatus: string; response: "pending" | "accepted" | "declined" | null; status: string | null; isCover: boolean;
-  sessionId?: string; attendance?: "unconfirmed" | "attended" | "absent" | "unresolved" | null; checkedInAt?: string | null;
+  sessionId?: string; seriesKey?: string | null; attendance?: "unconfirmed" | "attended" | "absent" | "unresolved" | null; checkedInAt?: string | null;
   canCheckIn?: boolean; canSelfConfirm?: boolean;
 };
 const timeOnly = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso));
@@ -36,6 +36,9 @@ export function MyShiftsList({ shifts }: { shifts: CoachShift[] }) {
     if (reason !== null) act(s.id, "confirm-attendance", { reason }, "Thanks. Your attendance is confirmed and staff can see your note.");
   };
   const [now] = useState(() => Date.now());
+  // Unanswered shifts in the same series and role from this one on: what "accept the series" will cover.
+  const seriesPending = (s: CoachShift) => !s.seriesKey ? 0 : shifts.filter(o => o.kind === "shift" && o.response === "pending" && o.sessionStatus !== "cancelled"
+    && o.seriesKey === s.seriesKey && o.role === s.role && o.startsAt >= s.startsAt && Date.parse(o.startsAt) > now).length;
   const upcoming = shifts.filter(s => Date.parse(s.endsAt) > now || s.canSelfConfirm || (s.attendance && s.attendance !== "unconfirmed" && Date.parse(s.endsAt) > now - 86_400_000));
   return <div className="mt-6 space-y-3">
     {notice && <p role={notice.error ? "alert" : "status"} className={`rounded-lg border p-3 text-sm font-semibold text-ink ${notice.error ? "border-red bg-red/10" : "border-border bg-blue-pale"}`}>{notice.text}</p>}
@@ -55,6 +58,11 @@ export function MyShiftsList({ shifts }: { shifts: CoachShift[] }) {
           <button type="button" disabled={busy === s.id} className={`${button} bg-blue text-white hover:bg-blue-dark`} onClick={() => act(s.id, "response", { response: "accept" }, "Shift accepted.")}>Accept</button>
           <button type="button" disabled={busy === s.id} className={`${button} border border-border text-ink`} onClick={() => act(s.id, "response", { response: "decline" }, "Shift declined.")}>Decline</button>
         </div>}
+        {!cancelled && s.kind === "shift" && s.response === "pending" && (() => {
+          const n = seriesPending(s);
+          return n > 1 && <button type="button" disabled={busy === s.id} className="mt-2 text-sm font-semibold text-blue disabled:opacity-50"
+            onClick={() => act(s.id, "response", { response: "accept", scope: "series" }, `${n} shifts accepted.`)}>Accept this and the {n - 1} later {n - 1 === 1 ? "date" : "dates"} in this series</button>;
+        })()}
         {s.canCheckIn && <button type="button" disabled={busy === s.id} className="mt-3 w-full rounded-xl bg-blue px-4 py-4 text-lg font-bold text-white hover:bg-blue-dark disabled:opacity-50 sm:w-auto" onClick={() => act(s.id, "check-in", {}, "You're checked in. Have a great session!")}>I&apos;m Here</button>}
         {s.attendance === "attended" && s.checkedInAt && <p className="mt-3 text-sm font-bold text-ink">✓ Checked in at {timeOnly(s.checkedInAt)}</p>}
         {s.attendance && s.attendance !== "unconfirmed" && !(s.attendance === "attended" && s.checkedInAt) && <p className="mt-3 text-sm font-bold text-ink">{ATTENDANCE[s.attendance]}</p>}

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { venueText, whenText, type Venue } from "@/lib/efn-staffing";
 
-type FilledBy = { name: string; coachId: string | null; response: string | null; isCover: boolean } | null;
+type FilledBy = { name: string; coachId: string | null; response: string | null; isCover: boolean; taskId: string | null } | null;
 type Position = { id: string; role: string; kind: string; additionalReason: string | null; filledBy: FilledBy; withdrawals: number };
 export type StaffSession = {
   id: string; title: string; startsAt: string; endsAt: string; venue: Venue | null; status: string; needsReview: boolean;
@@ -67,7 +67,19 @@ function PositionRow({ p, coaches, busy, post }: { p: Position; coaches: Coach[]
   const [coachId, setCoachId] = useState("");
   const [scope, setScope] = useState<"date" | "series">("date");
   const label = `${p.role}${p.kind === "additional" ? " (extra place)" : ""}`;
-  if (p.filledBy) return <li className="text-sm"><b>{label}:</b> {p.filledBy.name}{p.filledBy.isCover ? " (cover)" : ""} · {p.filledBy.response === "accepted" ? "accepted" : p.filledBy.response === "declined" ? "declined" : p.filledBy.response === "pending" ? "waiting for answer" : "training place"}</li>;
+  if (p.filledBy) {
+    const f = p.filledBy;
+    const remove = (series: boolean) => {
+      const reason = window.prompt(`Remove ${f.name} from ${series ? "this and every later date in the series" : "this date"}? Give a short reason (kept in the staffing log):`);
+      if (reason !== null) post(`tasks/${f.taskId}/remove`, { scope: series ? "series" : "date", reason },
+        d => `Removed ${f.name} from ${d.removed ?? 0} date(s).${d.emailed ? " They've been emailed." : ""} The place is open again.`);
+    };
+    return <li className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"><span><b>{label}:</b> {f.name}{f.isCover ? " (cover)" : ""} · {f.response === "accepted" ? "accepted" : f.response === "declined" ? "declined" : f.response === "pending" ? "waiting for answer" : "training place"}</span>
+      {f.taskId && <span className="flex gap-3">
+        <button type="button" disabled={busy} className="font-semibold text-blue disabled:opacity-50" onClick={() => remove(false)}>Remove</button>
+        {!f.isCover && <button type="button" disabled={busy} className="font-semibold text-blue disabled:opacity-50" onClick={() => remove(true)}>Remove from series</button>}
+      </span>}</li>;
+  }
   const cover = p.withdrawals > 0;
   return <li className="flex flex-wrap items-center gap-2 text-sm">
     <b>{label}:</b> <span className="text-muted">{cover ? "needs cover" : "unfilled"}</span>
