@@ -10,6 +10,9 @@ export type CoachShift = {
   canCheckIn?: boolean; canSelfConfirm?: boolean;
 };
 const timeOnly = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso));
+// A Members series can run on several weekdays; "the series" = same weekday and UK start time.
+const slotFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const slot = (iso: string) => slotFmt.format(new Date(iso));
 const ATTENDANCE: Record<string, string> = { attended: "Attendance confirmed", absent: "Marked absent", unresolved: "Waiting for staff to confirm" };
 const button = "rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-50";
 
@@ -38,7 +41,7 @@ export function MyShiftsList({ shifts }: { shifts: CoachShift[] }) {
   const [now] = useState(() => Date.now());
   // Unanswered shifts in the same series and role from this one on: what "accept the series" will cover.
   const seriesPending = (s: CoachShift) => !s.seriesKey ? 0 : shifts.filter(o => o.kind === "shift" && o.response === "pending" && o.sessionStatus !== "cancelled"
-    && o.seriesKey === s.seriesKey && o.role === s.role && o.startsAt >= s.startsAt && Date.parse(o.startsAt) > now).length;
+    && o.seriesKey === s.seriesKey && slot(o.startsAt) === slot(s.startsAt) && o.role === s.role && o.startsAt >= s.startsAt && Date.parse(o.startsAt) > now).length;
   const upcoming = shifts.filter(s => Date.parse(s.endsAt) > now || s.canSelfConfirm || (s.attendance && s.attendance !== "unconfirmed" && Date.parse(s.endsAt) > now - 86_400_000));
   return <div className="mt-6 space-y-3">
     {notice && <p role={notice.error ? "alert" : "status"} className={`rounded-lg border p-3 text-sm font-semibold text-ink ${notice.error ? "border-red bg-red/10" : "border-border bg-blue-pale"}`}>{notice.text}</p>}
