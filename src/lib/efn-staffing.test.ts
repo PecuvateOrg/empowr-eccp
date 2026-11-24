@@ -18,6 +18,8 @@ test("check-in needs both flags", () => {
 
 test("only the five staff actions are forwarded", () => {
   assert.equal(staffPath(["tasks", ID, "attendance"]), `/staff/tasks/${ID}/attendance`);
+  assert.equal(staffPath(["tasks", ID, "remove"]), `/staff/tasks/${ID}/remove`, "staff can undo a wrong assignment");
+  assert.equal(staffPath(["positions", ID, "remove"]), null, "remove is per task, not per place");
   assert.equal(staffPath(["tasks", ID, "hours"]), null, "hours and pay are never reachable from ECCP staff screens");
   assert.equal(staffPath(["sessions", ID, "positions"]), `/staff/sessions/${ID}/positions`);
   assert.equal(staffPath(["sessions", ID, "review"]), `/staff/sessions/${ID}/review`);

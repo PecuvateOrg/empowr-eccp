@@ -18,7 +18,7 @@ export const checkInEnabled = (env: Record<string, string | undefined> = process
 const STAFF_ACTIONS: Record<string, readonly string[]> = {
   sessions: ["positions", "review"],
   positions: ["assign", "cover"],
-  tasks: ["attendance"],
+  tasks: ["attendance", "remove"],
 };
 export function staffPath(parts: string[]): string | null {
   const [kind, id, action] = parts;
@@ -61,6 +61,7 @@ const CODES: Record<string, string> = {
   shift_withdrawn: "This shift was withdrawn.",
   session_not_started: "This session hasn't started yet.",
   not_head_coach: "Only the session's Head Coach can do this.",
+  session_started: "This session has already started, so the coach can't be removed here.",
 };
 const GENERIC = "Scheduling is unavailable. Try again shortly.";
 export function efnMessage(status: number, error: unknown): string {
