@@ -10,6 +10,7 @@ import { coachingGradeEnabled, toCoachingGrade } from "@/lib/coaching-grade";
 import { getDb } from "@/lib/supabase";
 import { efnMessage, londonDate, shiftScreensEnabled, venueText, whenText } from "@/lib/efn-staffing";
 import type { CoachShift } from "@/app/(coach)/my-shifts/MyShiftsList";
+import { FreelancerOnboardingCard } from "@/components/FreelancerOnboardingCard";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,7 @@ export default async function CoachDashboardPage() {
     <p className="mt-2 text-sm text-muted">Your coaching grade, contact details and availability.</p>
     <Link className="mt-4 inline-flex rounded-full border border-blue px-4 py-2 text-sm font-bold text-blue-dark hover:bg-blue-pale" href="/profile">View profile</Link>
    </section>
+   {shiftsEnabled && coach.admin_role === "coach" && <FreelancerOnboardingCard coachId={coach.id} />}
    {can(coach, "view_management") && <section className="rounded-2xl border border-border bg-card p-6">
     <h2 className="text-lg font-bold text-ink">Management</h2>
     <p className="mt-2 text-sm text-muted">Open the staff management area.</p>
