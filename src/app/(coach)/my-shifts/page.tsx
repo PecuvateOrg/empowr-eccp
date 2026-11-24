@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentCoach } from "@/lib/auth";
 import { efn } from "@/lib/efn-client";
-import { efnMessage, londonDate, shiftScreensEnabled } from "@/lib/efn-staffing";
+import { checkInEnabled, efnMessage, londonDate, shiftScreensEnabled } from "@/lib/efn-staffing";
 import { MyShiftsList, type CoachShift } from "./MyShiftsList";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function MyShifts(){
     return <main className=" min-w-0">
       <Link href="/dashboard" className="text-sm font-bold text-blue">← Dashboard</Link>
       <h1 className="mt-4 text-xl font-bold tracking-tight sm:text-2xl">My Shifts</h1>
-      <p className="mt-2 text-sm text-muted">Your upcoming sessions. Times are UK time.</p>
+      <p className="mt-2 text-sm text-muted">Your upcoming sessions. Times are UK time.{checkInEnabled() ? " On the day, tap I’m Here when you arrive: it confirms your hours." : ""}</p>
       {shifts ? <MyShiftsList shifts={shifts} />
         : <p role="alert" className="mt-6 rounded-lg border border-red bg-red/10 p-3 text-sm font-semibold text-ink">{efnMessage(r.status, r.data.error)}</p>}
     </main>;
