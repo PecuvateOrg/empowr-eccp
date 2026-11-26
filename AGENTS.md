@@ -2,9 +2,7 @@
 
 Empowr Certified Coaching Programme — the web platform for Empowr's member-to-coach certification pathway.
 
-@NON-NEGOTIABLES.md
-
-Other tools: read `NON-NEGOTIABLES.md` first, then `~/projects/NON-NEGOTIABLES.md`.
+Read `NON-NEGOTIABLES.md` before doing anything.
 
 ## Routing
 
