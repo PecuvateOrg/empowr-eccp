@@ -1,11 +1,10 @@
 # Empowr ECCP
 
-> Workspace rules: this project sits inside `~/projects`. Before working, read `~/projects/NON-NEGOTIABLES.md` and the hub's `NON-NEGOTIABLES.md` if there is one. Tools that stop at the repository root (Antigravity) won't load them by themselves.
-
 Empowr Certified Coaching Programme — the web platform for Empowr's member-to-coach certification pathway.
 
-This file (`AGENTS.md`, imported by `CLAUDE.md`) is Layer 0 — routing only. Read `NON-NEGOTIABLES.md` before doing anything; project
-detail lives in `CONTEXT.md`.
+@NON-NEGOTIABLES.md
+
+Other tools: read `NON-NEGOTIABLES.md` first, then `~/projects/NON-NEGOTIABLES.md`.
 
 ## Routing
 
@@ -17,16 +16,6 @@ detail lives in `CONTEXT.md`.
 | Deployment or going live | `ops/` | `CONTEXT.md` | `/netlify-deploy`, `/netlify-supabase-check` |
 | Brand or favicon setup | `ops/` | `CONTEXT.md` | `/init-brand` |
 
-## Shared Memory
-
-Adopts `Frameworks/MWP Framework/spec/session-memory.md` (2026-10-05). This repo is public, so
-all of these live in the **private** hub at `../workspace-docs/empowr-eccp/`, never here:
-
-- Session bridge (read at start, rewrite in place at close, ≤1,000 words): `memory.md`
-- Decisions: `decisions.md`
-- Traps and "do not" rules — read before touching the area: `gotchas.md`
-- Session history: `DEVLOG.md`; pre-bridge memory, search only: `archive/memory-history-to-2026-10-05.md`
-
 ## Cross-Workspace Flows
 
 - Feature delivery: `planning/spec/` → `planning/architecture/` → `src/` → `ops/`
@@ -37,12 +26,6 @@ all of these live in the **private** hub at `../workspace-docs/empowr-eccp/`, ne
 - Architecture and technical decisions → `planning/architecture/` and `planning/decisions/`
 - Next.js application and runtime assets → `src/`
 - Deployment and operational documentation → `ops/`
-
-## Token Management
-
-- Do not load `planning/` unless the task involves scope, architecture, or a decision.
-- Do not load Empowr brand references unless the task changes UI or visual assets.
-- Read the Empowr CIC KB only for programme facts, terminology, or public copy.
 
 ## Public Repository Documents
 
@@ -56,13 +39,6 @@ all of these live in the **private** hub at `../workspace-docs/empowr-eccp/`, ne
 - Branch: main
 - Base directory: src/
 
-## Skills and Tools
+## Facts
 
-- `/netlify-deploy` — deploy to Netlify and wire up a custom domain
-- `/netlify-supabase-check` — audit Netlify and Supabase integration before going live
-- `/webapp-testing` — test UI in a browser with Playwright
-- `/init-brand` — set up favicons, manifest, and brand assets
-- `/ses-email` — wire up transactional email through AWS SES
-- `/esign` — route to the appropriate e-signature integration
-- `/audit-mwp` — check MWP structure compliance
-- `/update-mwp` — update MWP files as the project evolves
+- Read the Empowr CIC KB only for programme facts, terminology, or public copy.
