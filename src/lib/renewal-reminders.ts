@@ -5,7 +5,7 @@
 //
 // BUILDS ITS OWN SUPABASE AND RESEND CLIENTS — see lib/issue-certificate.ts.
 import { createClient } from "@supabase/supabase-js";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/emails/send-email";
 import { londonDateIsoInDays } from "@/lib/london-date";
 import { COURSE_TITLE } from "@/lib/certificate-template";
 
@@ -39,23 +39,20 @@ async function sendDueReminders(db: any): Promise<{ due: number; sent: number; f
   if (error) throw new Error(`due-certificate lookup failed: ${error.message}`);
   if (!due || due.length === 0) return { due: 0, sent: 0, failed: 0 };
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not set");
-  const resend = new Resend(apiKey);
 
   let sent = 0;
   let failed = 0;
 
   for (const certificate of due) {
     try {
-      const { error: sendError } = await resend.emails.send({
+      const { error: sendError } = await sendEmail({
         from: FROM,
         to: certificate.coach.email,
         subject: `Your Empowr ECCP certificate renews soon — ${certificate.certificate_number}`,
         html: renewalEmailHtml(certificate),
         text: renewalEmailText(certificate),
       });
-      if (sendError) throw new Error(`resend rejected the send: ${sendError.name} — ${sendError.message}`);
+      if (sendError) throw new Error(`email service rejected the send: ${sendError.name} — ${sendError.message}`);
 
       // Marked immediately after a successful send, one certificate at a
       // time — a crash partway through this loop must never leave a sent
