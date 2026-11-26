@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/emails/send-email";
 
 // Every ECCP email goes out from this one address, and replies come back to it.
 // It sits on the empowrcic.org apex, which already carries verified SPF/DKIM/
@@ -8,16 +8,15 @@ import { Resend } from "resend";
 // deliver, then superseded by eccp@ on 2026-09-15 as the programme's own inbox.
 const FROM = "Empowr ECCP <eccp@empowrcic.org>";
 
-// Resend's SDK reports API failures in the returned `error` field rather than
+// sendEmail reports failures in the returned `error` field rather than
 // throwing, so an unverified sender or rejected address returns normally. Left
 // unchecked, the caller reports "code sent" for an email that never left.
 export async function sendOtpEmail(email: string, code: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not set");
 
-  const { data, error } = await new Resend(apiKey).emails.send({
+  const { data, error } = await sendEmail({
     from: FROM,
     to: email,
+    stream: "auth",
     subject: `Your ECCP login code: ${code}`,
     html: `
 <!DOCTYPE html>
@@ -39,10 +38,10 @@ Empowr CIC`,
   });
 
   if (error) {
-    throw new Error(`resend rejected the send: ${error.name} — ${error.message}`);
+    throw new Error(`email service rejected the send: ${error.name} — ${error.message}`);
   }
 
-  console.info(`[email] otp sent to ${email}, resend id ${data?.id}`);
+  console.info(`[email] otp sent to ${email}, message id ${data?.id}`);
 }
 
 // The sign-in link is a constant, not derived from the incoming request. On
@@ -59,12 +58,10 @@ export async function sendWelcomeEmail(
   email: string,
   fullName: string,
 ): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not set");
 
   const firstName = fullName.trim().split(/\s+/)[0] || "there";
 
-  const { data, error } = await new Resend(apiKey).emails.send({
+  const { data, error } = await sendEmail({
     from: FROM,
     to: email,
     subject: "Your Empowr coach account is ready",
@@ -96,10 +93,10 @@ If you weren't expecting this, reply to this email and let us know.`,
   });
 
   if (error) {
-    throw new Error(`resend rejected the send: ${error.name} — ${error.message}`);
+    throw new Error(`email service rejected the send: ${error.name} — ${error.message}`);
   }
 
-  console.info(`[email] welcome sent to ${email}, resend id ${data?.id}`);
+  console.info(`[email] welcome sent to ${email}, message id ${data?.id}`);
 }
 
 // A staff account is not a coach account — sendWelcomeEmail's copy tells the
@@ -112,12 +109,10 @@ export async function sendStaffWelcomeEmail(
   email: string,
   fullName: string,
 ): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not set");
 
   const firstName = fullName.trim().split(/\s+/)[0] || "there";
 
-  const { data, error } = await new Resend(apiKey).emails.send({
+  const { data, error } = await sendEmail({
     from: FROM,
     to: email,
     subject: "Your Empowr ECCP staff access is ready",
@@ -149,10 +144,10 @@ If you weren't expecting this, reply to this email and let us know.`,
   });
 
   if (error) {
-    throw new Error(`resend rejected the send: ${error.name} — ${error.message}`);
+    throw new Error(`email service rejected the send: ${error.name} — ${error.message}`);
   }
 
-  console.info(`[email] staff welcome sent to ${email}, resend id ${data?.id}`);
+  console.info(`[email] staff welcome sent to ${email}, message id ${data?.id}`);
 }
 
 const MESSAGES_URL = "https://eccp.empowrcic.org/messages";
@@ -162,10 +157,8 @@ const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<
 // subject line or message text, so nothing sensitive sits in an inbox or a
 // notification preview. The coach reads the reply after signing in.
 export async function sendCoachReplyEmail(email: string, fullName: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not set");
   const name = escapeHtml(fullName.split(" ")[0] || "there");
-  const { data, error } = await new Resend(apiKey).emails.send({
+  const { data, error } = await sendEmail({
     from: FROM,
     to: email,
     subject: "You have a new reply from the ECCP staff team",
@@ -191,6 +184,6 @@ For your privacy this email doesn't include the message. Please reply in ECCP, n
 
 Empowr CIC`,
   });
-  if (error) throw new Error(`resend rejected the send: ${error.name} — ${error.message}`);
-  console.info(`[email] coach reply alert sent, resend id ${data?.id}`);
+  if (error) throw new Error(`email service rejected the send: ${error.name} — ${error.message}`);
+  console.info(`[email] coach reply alert sent, message id ${data?.id}`);
 }

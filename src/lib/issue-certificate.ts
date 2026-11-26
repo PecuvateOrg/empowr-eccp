@@ -10,7 +10,7 @@
 // outside Next's build (the Netlify function) silently. Only plain data/string
 // modules are imported.
 import { createClient } from "@supabase/supabase-js";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/emails/send-email";
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import { renderCertificateHtml } from "@/lib/certificate-template";
@@ -149,10 +149,8 @@ async function sendCertificateEmail(
   certificateNumber: string,
   pdf: Buffer,
 ): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not set");
 
-  const { error } = await new Resend(apiKey).emails.send({
+  const { error } = await sendEmail({
     from: FROM,
     to: email,
     subject: `Your Empowr ECCP certificate — ${certificateNumber}`,
@@ -172,18 +170,17 @@ async function sendCertificateEmail(
 Your certificate (${certificateNumber}) is attached to this email, and you can download it again any time from your ECCP certificate page.
 
 Empowr CIC`,
-    // Resend's HTTP API documents base64 content; the SDK's type also allows
-    // a raw Buffer but doesn't say whether it re-encodes one, so this encodes
-    // explicitly rather than trusting an unverified auto-conversion.
+    // Base64 content, encoded explicitly; sendEmail accepts a base64 string or a Buffer.
     attachments: [
       {
         filename: `empowr-eccp-certificate-${certificateNumber}.pdf`,
         content: pdf.toString("base64"),
+        contentType: "application/pdf",
       },
     ],
   });
 
   if (error) {
-    throw new Error(`resend rejected the send: ${error.name} — ${error.message}`);
+    throw new Error(`email service rejected the send: ${error.name} — ${error.message}`);
   }
 }
