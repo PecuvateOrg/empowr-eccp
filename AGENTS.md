@@ -1,13 +1,68 @@
-# Agent Instructions
+# Empowr ECCP
 
-Read `CLAUDE.md` first. It is the canonical MWP Layer 0 file for this project and contains the routing table, project-wide rules, deployment metadata, and token-management instructions. Then read `NON-NEGOTIABLES.md`, which includes the check to run before every push.
+> Workspace rules: this project sits inside `~/projects`. Before working, read `~/projects/NON-NEGOTIABLES.md` and the hub's `NON-NEGOTIABLES.md` if there is one. Tools that stop at the repository root (Antigravity) won't load them by themselves.
 
-Then read these files when present and relevant:
+Empowr Certified Coaching Programme — the web platform for Empowr's member-to-coach certification pathway.
 
-1. `CONTEXT.md` for project orientation
-2. `../workspace-docs/empowr-eccp/memory.md` for current state
-3. `../workspace-docs/empowr-eccp/DEVLOG.md` for recent session history
+This file (`AGENTS.md`, imported by `CLAUDE.md`) is Layer 0 — routing only. Read `NON-NEGOTIABLES.md` before doing anything; project
+detail lives in `CONTEXT.md`.
 
-This is a public repository. Never create or commit `memory.md` or `DEVLOG.md` here; both live in the private Empowr CIC workspace at the paths above.
+## Routing
 
-These instructions are agent-generic unless a section is explicitly marked Claude-only.
+| Task | Go to | Read | Skills |
+|---|---|---|---|
+| **Design: look, colours, components** | `design-system/` | `design-system/MASTER.md` (then the Empowr brand kit it names) | — |
+| Feature specification or architecture | `planning/` | `CONTEXT.md` | — |
+| UI, routes, components, or application code | `src/` | `CONTEXT.md` | `/webapp-testing` |
+| Deployment or going live | `ops/` | `CONTEXT.md` | `/netlify-deploy`, `/netlify-supabase-check` |
+| Brand or favicon setup | `ops/` | `CONTEXT.md` | `/init-brand` |
+
+## Shared Memory
+
+Adopts `Frameworks/MWP Framework/spec/session-memory.md` (2026-10-05). This repo is public, so
+all of these live in the **private** hub at `../workspace-docs/empowr-eccp/`, never here:
+
+- Session bridge (read at start, rewrite in place at close, ≤1,000 words): `memory.md`
+- Decisions: `decisions.md`
+- Traps and "do not" rules — read before touching the area: `gotchas.md`
+- Session history: `DEVLOG.md`; pre-bridge memory, search only: `archive/memory-history-to-2026-10-05.md`
+
+## Cross-Workspace Flows
+
+- Feature delivery: `planning/spec/` → `planning/architecture/` → `src/` → `ops/`
+
+## File Placement
+
+- Product requirements and acceptance criteria → `planning/spec/`
+- Architecture and technical decisions → `planning/architecture/` and `planning/decisions/`
+- Next.js application and runtime assets → `src/`
+- Deployment and operational documentation → `ops/`
+
+## Token Management
+
+- Do not load `planning/` unless the task involves scope, architecture, or a decision.
+- Do not load Empowr brand references unless the task changes UI or visual assets.
+- Read the Empowr CIC KB only for programme facts, terminology, or public copy.
+
+## Public Repository Documents
+
+- Private operational documents live at `../workspace-docs/empowr-eccp/DEVLOG.md` and `../workspace-docs/empowr-eccp/memory.md`. See `NON-NEGOTIABLES.md` for what must never be committed here.
+
+## Deployment
+
+- Platform: AWS Amplify, London (eu-west-2), since 2026-11-18. The Netlify site is a fallback until it is retired
+- Scheduled jobs: renewal reminders via AWS EventBridge → `POST /api/cron/renewal-reminders` (08:00 UTC)
+- Domain: eccp.empowrcic.org
+- Branch: main
+- Base directory: src/
+
+## Skills and Tools
+
+- `/netlify-deploy` — deploy to Netlify and wire up a custom domain
+- `/netlify-supabase-check` — audit Netlify and Supabase integration before going live
+- `/webapp-testing` — test UI in a browser with Playwright
+- `/init-brand` — set up favicons, manifest, and brand assets
+- `/ses-email` — wire up transactional email through AWS SES
+- `/esign` — route to the appropriate e-signature integration
+- `/audit-mwp` — check MWP structure compliance
+- `/update-mwp` — update MWP files as the project evolves
