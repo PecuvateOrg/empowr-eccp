@@ -14,6 +14,8 @@ const timeOnly = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "
 const slotFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 const slot = (iso: string) => slotFmt.format(new Date(iso));
 const ATTENDANCE: Record<string, string> = { attended: "Attendance confirmed", absent: "Marked absent", unresolved: "Waiting for staff to confirm" };
+const OTHER = "Something else";
+const MISSED_CHECK_IN = ["I forgot to tap I'm Here", "I didn't know I had to check in", "My phone was flat or had no signal", "The I'm Here button didn't work", OTHER];
 const button = "rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-50";
 
 export function MyShiftsList({ shifts }: { shifts: CoachShift[] }) {
@@ -27,16 +29,26 @@ export function MyShiftsList({ shifts }: { shifts: CoachShift[] }) {
       const data = await res.json().catch(() => ({}));
       setNotice(res.ok ? { error: false, text: ok } : { error: true, text: data.error ?? "Something went wrong. Try again." });
       if (res.ok) router.refresh();
+      setBusy(null);
+      return res.ok;
     } catch { setNotice({ error: true, text: "Couldn't reach ECCP. Check your connection and try again." }); }
     setBusy(null);
+    return false;
   }
   const withdraw = (s: CoachShift) => {
     const reason = window.prompt(`Why are you pulling out of ${s.title}? (needed for staff to arrange cover)`);
     if (reason !== null) act(s.id, "withdraw", { reason }, "You've pulled out of this shift. Staff have been told.");
   };
+  // Why "I'm Here" wasn't tapped: a pick-list, not free text (first real shift 2026-11-25 got "I don't know").
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [choice, setChoice] = useState("");
+  const [other, setOther] = useState("");
+  const openConfirm = (id: string) => { setConfirming(id); setChoice(""); setOther(""); };
+  const reasonText = choice === OTHER ? `${OTHER}: ${other.trim()}` : choice;
+  const reasonReady = choice !== "" && (choice !== OTHER || other.trim() !== "");
   const confirm = (s: CoachShift) => {
-    const reason = window.prompt(`You didn't check in for ${s.title}. Briefly say why, to confirm you were there:`);
-    if (reason !== null) act(s.id, "confirm-attendance", { reason }, "Thanks. Your attendance is confirmed and staff can see your note.");
+    if (!reasonReady) return;
+    act(s.id, "confirm-attendance", { reason: reasonText }, "Thanks. Your attendance is confirmed and staff can see your answer.").then(ok => { if (ok) setConfirming(null); });
   };
   const [now] = useState(() => Date.now());
   // Unanswered shifts in the same series and role from this one on: what "accept the series" will cover.
@@ -71,7 +83,25 @@ export function MyShiftsList({ shifts }: { shifts: CoachShift[] }) {
         {s.attendance && s.attendance !== "unconfirmed" && !(s.attendance === "attended" && s.checkedInAt) && <p className="mt-3 text-sm font-bold text-ink">{ATTENDANCE[s.attendance]}</p>}
         {s.canSelfConfirm && <div className="mt-3 rounded-lg border border-border bg-blue-pale p-3 text-sm">
           <p>You didn&apos;t check in for this shift. Check-in confirms your hours for payment.</p>
-          <button type="button" disabled={busy === s.id} className={`${button} mt-2 bg-blue text-white hover:bg-blue-dark`} onClick={() => confirm(s)}>Confirm I was there</button>
+          {confirming !== s.id
+            ? <button type="button" disabled={busy === s.id} className={`${button} mt-2 bg-blue text-white hover:bg-blue-dark`} onClick={() => openConfirm(s.id)}>Confirm I was there</button>
+            : <fieldset className="mt-3">
+                <legend className="font-bold">Why didn&apos;t you tap I&apos;m Here when you arrived?</legend>
+                <div className="mt-2 space-y-1">
+                  {MISSED_CHECK_IN.map(r => <label key={r} className="flex min-h-11 items-center gap-2">
+                    <input type="radio" name={`missed-${s.id}`} value={r} checked={choice === r} onChange={() => setChoice(r)} /> {r}
+                  </label>)}
+                </div>
+                {choice === OTHER && <label className="mt-2 block">
+                  <span className="sr-only">Tell us what happened</span>
+                  <input type="text" value={other} onChange={e => setOther(e.target.value)} maxLength={200} placeholder="Tell us what happened"
+                    className="w-full rounded-lg border border-border bg-card px-3 py-2" />
+                </label>}
+                <div className="mt-3 flex gap-2">
+                  <button type="button" disabled={busy === s.id || !reasonReady} className={`${button} bg-blue text-white hover:bg-blue-dark`} onClick={() => confirm(s)}>Confirm I was there</button>
+                  <button type="button" disabled={busy === s.id} className={`${button} border border-border text-ink`} onClick={() => setConfirming(null)}>Cancel</button>
+                </div>
+              </fieldset>}
         </div>}
         {!cancelled && s.kind === "shift" && s.response === "accepted" && s.role === "Head Coach" && s.sessionId && Date.parse(s.startsAt) - 30 * 60_000 <= now && Date.parse(s.endsAt) + 86_400_000 > now &&
           <a href={`/my-shifts/session/${s.sessionId}`} className="mt-3 block text-sm font-semibold text-blue">Your team&apos;s check-in →</a>}
